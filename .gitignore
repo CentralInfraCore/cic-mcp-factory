@@ -1,0 +1,16 @@
+# Lokális path konfiguráció — gép-specifikus, ne commitold
+tools/env.sh
+
+# Agent runtime state (ne kerüljön gitbe)
+.claude/settings.local.json
+*.log
+
+# Job futás közbeni temp fájlok
+jobs/*/tmp/
+
+# Agent workspace — klónok és futási állapot, nem tracked
+jobs/*/workspace/
+jobs/*/workspace-saved/
+
+# Hook telemetria az élő workdir-ben futás közben
+jobs/*/output/events.jsonl

@@ -1,0 +1,42 @@
+schema_version: "1.0"
+
+# Identification
+job_id: ""                  # unique, e.g. "workdir-get-diff-001"
+parent_job_id: ""           # parent job id if this is a child job; "" for root
+
+# Hierarchy level
+level: ""                   # orchestrator | capability
+
+# Capability — what this job produces
+capability:
+  id: ""                     # e.g. "cic_mcp.workdir.get_diff"
+  target_repo: ""            # which cic-mcp-* repo this capability belongs to
+  change_type: ""            # new_capability | fix | enhancement
+  status_after_merge: ""     # experimental | candidate | canonical
+
+# KB context
+kb_focus: []                # focus_pack node-ids or tags, e.g. ["mcp", "trust-domain"]
+promptmap_ref: ""           # key in ai/PROMPTMAP.yaml; "" if not applicable
+
+# Agent
+agent:
+  config_dir: ""            # CLAUDE_CONFIG_DIR value, e.g. "~/.claude-personal/agents/agent-01"
+  model: ""                 # e.g. "claude-sonnet-4-6"
+  session_id: ""            # optional; Claude Code session UUID, set by run-job.sh after each run.
+                             # Used by `run-job.sh <job-id> <agent-id> --resume` to continue
+                             # exactly where a session-limit/error cutoff happened.
+
+# Workplace — agent saját klónjában, nem a live workdir-ban
+workplace:
+  repos: []                 # klónozandó repók, pl. ["cic-mcp-factory", "cic-mcp-workdir"]
+  branch: ""                # feature branch neve, pl. "feature/<job-id>"
+
+# Status
+status: "pending"           # pending | running | done | error
+error_message: ""           # only when status: error
+
+# Timestamps (ISO 8601)
+timestamps:
+  created: ""
+  started: ""
+  completed: ""
