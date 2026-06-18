@@ -3,23 +3,14 @@
 set -euo pipefail
 
 WORKDIR="$(cd "$(dirname "$0")/.." && pwd)"
-INDEX="$WORKDIR/jobs/index.yaml"
 
 python3 - "$WORKDIR" <<'EOF'
 import os, sys
-import re
+import yaml
 from datetime import datetime, timezone
 
 workdir = sys.argv[1]
 jobs_dir = os.path.join(workdir, "jobs")
-
-def read_field(content, field, default=""):
-    m = re.search(rf'^{field}:\s*"?([^"\n]+)"?', content, re.MULTILINE)
-    return m.group(1).strip() if m else default
-
-def read_nested(content, field, default=""):
-    m = re.search(rf'^\s+{field}:\s*"?([^"\n]+)"?', content, re.MULTILINE)
-    return m.group(1).strip() if m else default
 
 jobs = []
 for entry in sorted(os.listdir(jobs_dir)):
@@ -29,17 +20,21 @@ for entry in sorted(os.listdir(jobs_dir)):
     if not os.path.isfile(meta_path):
         continue
     with open(meta_path) as f:
-        content = f.read()
+        data = yaml.safe_load(f) or {}
+
+    capability = data.get("capability") or {}
+    timestamps = data.get("timestamps") or {}
+
     jobs.append({
-        "id":           read_field(content, "job_id"),
-        "level":        read_field(content, "level"),
-        "status":       read_field(content, "status"),
-        "parent":       read_field(content, "parent_job_id"),
-        "created":      read_nested(content, "created"),
-        "started":      read_nested(content, "started"),
-        "completed":    read_nested(content, "completed"),
-        "capability_id": read_nested(content, "id"),
-        "target_repo":  read_nested(content, "target_repo"),
+        "id":            data.get("job_id", ""),
+        "level":         data.get("level", ""),
+        "status":        data.get("status", ""),
+        "parent":        data.get("parent_job_id", ""),
+        "capability_id": capability.get("id", ""),
+        "target_repo":   capability.get("target_repo", ""),
+        "created":       timestamps.get("created", ""),
+        "started":       timestamps.get("started", ""),
+        "completed":     timestamps.get("completed", ""),
     })
 
 now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")

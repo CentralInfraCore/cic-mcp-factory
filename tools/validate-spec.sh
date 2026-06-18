@@ -45,8 +45,8 @@ if grep -qE '(audit|call.chain|implemented|scaffold|hívódik|olvasd a forrás|s
     if ! grep -qE 'grep -rn|grep -r ' "$SPEC"; then
         FAILURES+=("K7: forráskód audit, de nincs 'grep -rn' előírás a call-chain ellenőrzéshez")
     fi
-    if ! grep -qE '_test\.go|test_.*\.py|.*_test\.py|deadcode' "$SPEC"; then
-        FAILURES+=("K7b: grep van, de nincs teszt-fájl kizárás vagy 'deadcode' — exportált szimbólumoknál grep -v _test.go/test_*.py VAGY deadcode ./... kötelező")
+    if ! grep -qE '_test\.go|test_|_test\.py|deadcode' "$SPEC"; then
+        FAILURES+=("K7b: grep van, de nincs teszt-fájl kizárás vagy 'deadcode' — exportált szimbólumoknál grep -v _test.go / grep -v test_ / deadcode ./... kötelező")
     fi
 fi
 

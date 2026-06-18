@@ -128,8 +128,14 @@ Minden capability-job output-jában (`jobs/<job-id>/output/`) szerepeljen:
 
 | Parancs | Mit csinál |
 |---|---|
-| `./tools/run-job.sh <job-id> [agent-id]` | Teljes lifecycle: klón, running→done, commit, push |
-| `./tools/update-index.sh` | `jobs/index.yaml` újragenerálása |
+| `./tools/validate-spec.sh <job-id>` | Mechanikus spec-ellenőrzés (K1/K3/K4/K7/K8/K9) — exit 1 = NO-GO |
+| `./tools/run-job.sh <job-id> [agent-id]` | Teljes lifecycle: validate-spec → klón (factory + `capability.target_repo`) → running→done → commit, push |
+| `./tools/update-index.sh` | `jobs/index.yaml` újragenerálása (`yaml.safe_load`, nem regex) |
+
+`run-job.sh` headless `claude --print`-et használ — ÉLŐ MCP hozzáférést igénylő joboknál (kb_status,
+search_nodes valós időben) az Agent tool-lal indítás kell, lásd `.claude/commands/job-run.md`.
+`run-job.sh` automatikusan futtatja a `validate-spec.sh`-t friss indításnál (nem `--resume`-nál) —
+NO-GO esetén nem indítja el az agentet.
 
 ---
 

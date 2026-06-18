@@ -8,7 +8,9 @@ MCP capability gyártó- és karbantartó factory a `cic-mcp-*` családhoz (`kno
 ## Gyors megértés AI-val
 
 1. `CLAUDE.md` — működési modell, capability lifecycle, job struktúra
-2. `jobs/` — konkrét job példák a lifecycle illusztrálásához
+2. `.claude/commands/job-*.md` — boot/create/run/validate/review/close skill-ek
+3. `jobs/` — jelenleg üres (még nincs lefuttatott capability-job); a struktúrát a
+   `.schema/meta.yaml` és a `.claude/commands/job-create.md` írja le
 
 ---
 
