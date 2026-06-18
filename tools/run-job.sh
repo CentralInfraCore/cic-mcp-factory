@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Job lifecycle wrapper
+# Job lifecycle wrapper — Mode B (batch/headless), lásd CLAUDE.md "Két indítási mód"
 # Használat: ./tools/run-job.sh <job-id> [agent-id] [--resume]
 #
 #   --resume   Session-limit/error miatt megszakadt futás folytatása
 #              UGYANABBAN a Claude Code session-ben (claude --resume <session_id>).
-#              A meglévő workspace-t és feature branch-et újrahasználja,
+#              A meglévő workspace-t és feature branch-eket újrahasználja,
 #              nem klónoz újra. Feltétel: meta.yaml agent.session_id ki van töltve
 #              (az előző futás állította be).
 #
@@ -14,15 +14,20 @@
 #     meta.yaml             ← lifecycle tracking
 #     ref/                  ← referencia anyagok (opcionális, git-tracked)
 #     workspace/            ← gitignored; agent klónjai élnek itt
-#       cic-mcp-factory/    ← git clone, feature/<job-id> branch
-#       <target-repo>/      ← capability.target_repo automatikus klónja, ugyanazon branch-en
+#       cic-mcp-factory/    ← git clone, feature/<job-id> branch (mindig)
+#       <repo>/             ← workplace.repos ∪ {capability.target_repo} minden tagja,
+#                              ugyanazon feature/<job-id> branch-en
 #
 # MCP elérés: a --mcp-config flag itt csak átadásra kerül a `claude --print`-nek, de
 # print (headless) módban a Claude CLI nem épít fel élő MCP tool-kapcsolatot úgy, mint
-# az interaktív/Agent-tool session. Ezért ez a script batch/automatizált futtatáshoz jó
-# (a target repo előre klónozva van helyette), de ha a jobnak ÉLŐ cic-graph MCP hozzáférés
-# kell (kb_status, search_nodes stb. valós időben), azt Agent tool-lal indítsd — lásd
-# .claude/commands/job-run.md.
+# az interaktív/Agent-tool session (Mode A). Ezért ez a script batch/automatizált
+# futtatáshoz jó (minden szükséges repo előre klónozva van helyette), de ha a jobnak
+# ÉLŐ cic-graph MCP hozzáférés kell (kb_status, search_nodes stb. valós időben), azt
+# Agent tool-lal indítsd — lásd .claude/commands/job-run.md "Mode A".
+#
+# Státusz: ez a script `agent_done`-ra zár SIKERES futás esetén, NEM `done`-ra.
+# `done` csak /job-close (review + target-repo evidence ellenőrzés) után jön — lásd
+# .claude/commands/job-close.md. exit code 0 ≠ kész capability-job.
 set -euo pipefail
 
 WORKDIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -65,8 +70,20 @@ STATUS=$(grep '^status:' "$META" | awk -F'"' '{print $2}')
 MODEL=$(grep '^  model:' "$META" | awk -F'"' '{print $2}' || true)
 SESSION_ID=$(grep '^\s*session_id:' "$META" | awk -F'"' '{print $2}' || true)
 TARGET_REPO=$(grep '^\s*target_repo:' "$META" | awk -F'"' '{print $2}' || true)
-TARGET_CLONE="$WORKSPACE/$TARGET_REPO"
-TARGET_REMOTE="git@github.com:CentralInfraCore/$TARGET_REPO.git"
+
+# workplace.repos ∪ {capability.target_repo}, "cic-mcp-factory" kizárva (azt mindig
+# külön klónozzuk FACTORY_CLONE-ba) — ez vezérli a tényleges klónozást, nem csak target_repo
+mapfile -t CLONE_REPOS < <(python3 -c "
+import yaml
+data = yaml.safe_load(open('$META')) or {}
+repos = list((data.get('workplace') or {}).get('repos') or [])
+target = (data.get('capability') or {}).get('target_repo') or ''
+if target and target not in repos:
+    repos.append(target)
+for r in repos:
+    if r != 'cic-mcp-factory':
+        print(r)
+")
 
 # --- Spec validáció — kötelező, csak friss indításnál (resume-nál már túl van rajta) ---
 if [[ "$RESUME" -ne 1 ]]; then
@@ -84,8 +101,8 @@ else
     if [[ "$STATUS" == "running" ]]; then
         echo "[WARN] Job már fut. Folytatod? (y/N)"; read -r ans; [[ "$ans" == "y" ]] || exit 1
     fi
-    if [[ "$STATUS" == "done" ]]; then
-        echo "[WARN] Job már kész. Újrafuttatod? (y/N)"; read -r ans; [[ "$ans" == "y" ]] || exit 1
+    if [[ "$STATUS" == "agent_done" || "$STATUS" == "done" ]]; then
+        echo "[WARN] Job már $STATUS állapotban van. Újrafuttatod? (y/N)"; read -r ans; [[ "$ans" == "y" ]] || exit 1
     fi
 fi
 
@@ -123,12 +140,11 @@ else
     git -C "$FACTORY_CLONE" checkout -b "$FEATURE_BRANCH"
     echo "[*] Feature branch: $FEATURE_BRANCH"
 
-    if [[ -n "$TARGET_REPO" ]]; then
-        echo "[*] Target repo klónozása: $TARGET_REPO"
-        git clone "$TARGET_REMOTE" "$TARGET_CLONE"
-        git -C "$TARGET_CLONE" checkout -b "$FEATURE_BRANCH"
-        echo "[*] Target repo feature branch: $FEATURE_BRANCH"
-    fi
+    for repo in "${CLONE_REPOS[@]}"; do
+        echo "[*] Workplace repo klónozása: $repo"
+        git clone "git@github.com:CentralInfraCore/$repo.git" "$WORKSPACE/$repo"
+        git -C "$WORKSPACE/$repo" checkout -b "$FEATURE_BRANCH"
+    done
 fi
 
 # --- Prompt összeállítása ---
@@ -144,6 +160,13 @@ mi van már kész és mi maradt hátra, majd fejezd be a hátralévő munkát.
 
 Push csak \`$FEATURE_BRANCH\` branch-re. Main-re NEM."
 else
+    WORKPLACE_REPO_LINES=""
+    for repo in "${CLONE_REPOS[@]}"; do
+        NOTE=""
+        [[ "$repo" == "$TARGET_REPO" ]] && NOTE=" — capability.target_repo, a tényleges implementáció IDE kerül"
+        WORKPLACE_REPO_LINES="${WORKPLACE_REPO_LINES}- \`$repo\`: \`$WORKSPACE/$repo\`${NOTE}, feature/$JOB_ID branch-en, már klónozva\n"
+    done
+
     PROMPT="$(envsubst < "$INPUT")
 
 ---
@@ -155,22 +178,22 @@ Feature branch: \`$FEATURE_BRANCH\`
 - Output dokumentumok: \`$FACTORY_CLONE/jobs/$JOB_ID/output/\`
 - Sub-job specek (ha létrehozol): \`$FACTORY_CLONE/jobs/<sub-job-id>/input.md\` + \`meta.yaml\`
 - Referencia anyagok: \`$FACTORY_CLONE/jobs/$JOB_ID/ref/\`
-$([ -n "$TARGET_REPO" ] && echo "- Target repo klón (\`capability.target_repo: $TARGET_REPO\`): \`$TARGET_CLONE\` — már klónozva, feature/$JOB_ID branch-en. A capability implementáció IDE kerül, nem a cic-mcp-factory klónba.")
-
-A munka végén commitolj és pushol a feature branch-re:
+$(printf '%b' "$WORKPLACE_REPO_LINES")
+A munka végén commitolj és pushol minden módosított repóban a feature branch-re:
 \`\`\`bash
 git -C $FACTORY_CLONE add jobs/$JOB_ID/output/ jobs/
 git -C $FACTORY_CLONE commit -m \"job: $JOB_ID — output\"
 git -C $FACTORY_CLONE push -u origin $FEATURE_BRANCH
 \`\`\`
 $([ -n "$TARGET_REPO" ] && echo "
-Ha implementáltál a target repóban (\`$TARGET_CLONE\`), azt is commitold és pusholod
-ugyanazon \`$FEATURE_BRANCH\` néven, KÜLÖN PR-ként a target repóban:
+A target repóban (\`$WORKSPACE/$TARGET_REPO\`) is commitolj és pusholj, KÜLÖN PR-ként:
 \`\`\`bash
-git -C $TARGET_CLONE add -A
-git -C $TARGET_CLONE commit -m \"capability: $JOB_ID\"
-git -C $TARGET_CLONE push -u origin $FEATURE_BRANCH
-\`\`\`")
+git -C $WORKSPACE/$TARGET_REPO add -A
+git -C $WORKSPACE/$TARGET_REPO commit -m \"capability: $JOB_ID\"
+git -C $WORKSPACE/$TARGET_REPO push -u origin $FEATURE_BRANCH
+\`\`\`
+A push-t a script futás után mechanikusan ellenőrzi (run-evidence.md) — ha nincs pusholva,
+a job evidence hiányosnak fog számítani a /job-close review-nál.")
 
 Push csak \`$FEATURE_BRANCH\` branch-re. Main-re NEM."
 fi
@@ -213,11 +236,60 @@ else
     echo "[WARN] Nem található új session jsonl a $SESSION_DIR alatt — session_id nem frissül"
 fi
 
-END=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-NEW_STATUS=$([[ $EXIT_CODE -eq 0 ]] && echo "done" || echo "error")
-echo "[$([ "$NEW_STATUS" = "done" ] && echo "✓" || echo "!")] $JOB_ID — $NEW_STATUS ($END)"
+# --- Post-run evidence — mechanikus, NEM az agent állítása alapján ---
+# exit code 0 != kész capability-job: ez a blokk azt rögzíti amit a script TÉNYLEGESEN
+# lát a klónok állapotában (branch, HEAD, uncommitted diff, push státusz), hogy a
+# /job-close review-nak ne kelljen az agent saját összefoglalójára hagyatkoznia.
+evidence_for_repo() {
+    local dir="$1" label="$2"
+    if [[ ! -d "$dir/.git" ]]; then
+        echo "## $label"; echo '```'; echo "nincs klón ezen a néven"; echo '```'; return
+    fi
+    local branch local_head dirty remote_head push_state
+    branch=$(git -C "$dir" branch --show-current 2>/dev/null || echo "N/A")
+    local_head=$(git -C "$dir" log -1 --oneline 2>/dev/null || echo "N/A")
+    dirty=$(git -C "$dir" status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+    local local_sha remote_sha
+    local_sha=$(git -C "$dir" rev-parse HEAD 2>/dev/null || echo "")
+    remote_sha=$(git -C "$dir" rev-parse '@{u}' 2>/dev/null || echo "")
+    if [[ -z "$remote_sha" ]]; then
+        push_state="NOT PUSHED — nincs upstream tracking branch"
+    elif [[ "$local_sha" == "$remote_sha" ]]; then
+        push_state="pusholva — local HEAD == origin/$branch"
+    else
+        push_state="NEM TELJESEN PUSHOLVA — local HEAD ($local_sha) != origin ($remote_sha)"
+    fi
+    echo "## $label"
+    echo '```'
+    echo "path:   $dir"
+    echo "branch: $branch"
+    echo "HEAD:   $local_head"
+    echo "dirty:  $dirty uncommitted change(s)"
+    echo "push:   $push_state"
+    echo '```'
+}
 
-# --- running → done/error (live meta) ---
+EVIDENCE_FILE="$FACTORY_CLONE/jobs/$JOB_ID/output/run-evidence.md"
+{
+    echo "# Run evidence — $JOB_ID"
+    echo "Generálva: $(date -u +"%Y-%m-%dT%H:%M:%SZ") — tools/run-job.sh (mechanikus, nem agent-állítás)"
+    echo
+    evidence_for_repo "$FACTORY_CLONE" "cic-mcp-factory"
+    for repo in "${CLONE_REPOS[@]}"; do
+        echo
+        evidence_for_repo "$WORKSPACE/$repo" "$repo"
+    done
+} > "$EVIDENCE_FILE"
+echo "[*] Run evidence: $EVIDENCE_FILE"
+
+END=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+NEW_STATUS=$([[ $EXIT_CODE -eq 0 ]] && echo "agent_done" || echo "error")
+echo "[$([ "$NEW_STATUS" = "agent_done" ] && echo "✓" || echo "!")] $JOB_ID — $NEW_STATUS ($END)"
+
+# --- running → agent_done/error (live meta) ---
+# "agent_done" SZÁNDÉKOSAN nem "done": a Claude folyamat sikeres lefutása (exit 0) nem
+# bizonyítja hogy az output/target-repo evidence teljes. "done"-ra csak /job-close zár,
+# review + run-evidence.md ellenőrzés után.
 python3 - "$META" "$NEW_STATUS" "$END" "$SESSION_ID" <<'PYEOF'
 import sys, re
 meta_path, status, end, session_id = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
@@ -239,9 +311,10 @@ git -C "$WORKDIR" add "$META" jobs/index.yaml
 git -C "$WORKDIR" commit -m "job: $JOB_ID — $NEW_STATUS"
 git -C "$WORKDIR" push
 
-echo "[✓] Kész: $JOB_ID — $NEW_STATUS"
+echo "[✓] Agent lefutott: $JOB_ID — $NEW_STATUS"
 echo "[*] Feature branch pusholt: $FEATURE_BRANCH"
-echo "[*] Review: gh pr create --head $FEATURE_BRANCH"
+echo "[*] Evidence: $EVIDENCE_FILE — nézd át /job-close előtt"
+echo "[*] Következő lépés: /job-close $JOB_ID (status agent_done → done, csak review után)"
 if [[ "$NEW_STATUS" == "error" ]]; then
     echo "[*] Folytatás ugyanebben a session-ben: ./tools/run-job.sh $JOB_ID $AGENT_ID --resume"
 fi

@@ -26,13 +26,21 @@ agent:
                              # Used by `run-job.sh <job-id> <agent-id> --resume` to continue
                              # exactly where a session-limit/error cutoff happened.
 
-# Workplace — agent saját klónjában, nem a live workdir-ban
+# Workplace — agent saját klónjában, nem a live workdir-ban.
+# "cic-mcp-factory" mindig automatikusan klónozva van, NE vedd fel ide.
+# capability.target_repo automatikusan a klónozási unióba kerül, ha nincs itt felsorolva.
 workplace:
-  repos: []                 # klónozandó repók, pl. ["cic-mcp-factory", "cic-mcp-workdir"]
+  repos: []                 # további klónozandó repók, pl. ["cic-mcp-workdir", "cic-mcp-knowledge"]
   branch: ""                # feature branch neve, pl. "feature/<job-id>"
 
 # Status
-status: "pending"           # pending | running | done | error
+status: "pending"           # pending | running | agent_done | done | error
+# pending      — spec megírva, még nem indult
+# running      — agent fut (run-job.sh vagy Agent tool)
+# agent_done   — a Claude folyamat sikeresen lefutott (exit 0), DE ez nem bizonyítja hogy
+#                az output/target-repo evidence teljes — exit code 0 != kész capability-job
+# done         — /job-close lezárta: review megtörtént, run-evidence.md ellenőrizve
+# error        — a futás hibával állt le; --resume-mal folytatható
 error_message: ""           # only when status: error
 
 # Timestamps (ISO 8601)

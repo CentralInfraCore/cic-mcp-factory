@@ -24,7 +24,10 @@ A `.schema/meta.yaml` alapján. Kötelező mezők:
 - `capability.change_type` — new_capability | fix | enhancement
 - `capability.status_after_merge` — experimental | candidate | canonical
 - `kb_focus` — releváns cic-graph node ID-k (ha ismert)
-- `workplace.repos` — mit kell klónozni (mindig: "cic-mcp-factory" + a target repo, ha létezik)
+- `workplace.repos` — további klónozandó repók a `capability.target_repo`-n felül, ha kell
+  (pl. ha a capability több cic-mcp-* repót is érint). NE vedd fel "cic-mcp-factory"-t —
+  azt a runner mindig automatikusan klónozza. `capability.target_repo` automatikusan
+  bekerül a klónozási unióba, nem kell külön megismételni itt, ha más repo nem szükséges.
 - `workplace.branch` — "feature/<job-id>"
 - `status` — "pending"
 - `timestamps.created` — ISO 8601
