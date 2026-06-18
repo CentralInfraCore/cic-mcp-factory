@@ -15,7 +15,14 @@
 #     ref/                  ← referencia anyagok (opcionális, git-tracked)
 #     workspace/            ← gitignored; agent klónjai élnek itt
 #       cic-mcp-factory/    ← git clone, feature/<job-id> branch
-#       <egyéb repo>/       ← ha a job más cic-mcp-* repót is igényel
+#       <target-repo>/      ← capability.target_repo automatikus klónja, ugyanazon branch-en
+#
+# MCP elérés: a --mcp-config flag itt csak átadásra kerül a `claude --print`-nek, de
+# print (headless) módban a Claude CLI nem épít fel élő MCP tool-kapcsolatot úgy, mint
+# az interaktív/Agent-tool session. Ezért ez a script batch/automatizált futtatáshoz jó
+# (a target repo előre klónozva van helyette), de ha a jobnak ÉLŐ cic-graph MCP hozzáférés
+# kell (kb_status, search_nodes stb. valós időben), azt Agent tool-lal indítsd — lásd
+# .claude/commands/job-run.md.
 set -euo pipefail
 
 WORKDIR="$(cd "$(dirname "$0")/.." && pwd)"
@@ -57,6 +64,17 @@ SESSION_DIR="$AGENT_CONFIG/projects/$PROJECT_SLUG"
 STATUS=$(grep '^status:' "$META" | awk -F'"' '{print $2}')
 MODEL=$(grep '^  model:' "$META" | awk -F'"' '{print $2}' || true)
 SESSION_ID=$(grep '^\s*session_id:' "$META" | awk -F'"' '{print $2}' || true)
+TARGET_REPO=$(grep '^\s*target_repo:' "$META" | awk -F'"' '{print $2}' || true)
+TARGET_CLONE="$WORKSPACE/$TARGET_REPO"
+TARGET_REMOTE="git@github.com:CentralInfraCore/$TARGET_REPO.git"
+
+# --- Spec validáció — kötelező, csak friss indításnál (resume-nál már túl van rajta) ---
+if [[ "$RESUME" -ne 1 ]]; then
+    bash "$WORKDIR/tools/validate-spec.sh" "$JOB_ID" || {
+        echo "[ERROR] validate-spec.sh NO-GO — javítsd az input.md-t, run-job.sh nem folytatja az agent indítást."
+        exit 1
+    }
+fi
 
 if [[ "$RESUME" -eq 1 ]]; then
     [[ -n "$SESSION_ID" ]] || { echo "[ERROR] meta.yaml agent.session_id üres — nincs mit resume-olni"; exit 1; }
@@ -104,6 +122,13 @@ else
     git clone "$FACTORY_REMOTE" "$FACTORY_CLONE"
     git -C "$FACTORY_CLONE" checkout -b "$FEATURE_BRANCH"
     echo "[*] Feature branch: $FEATURE_BRANCH"
+
+    if [[ -n "$TARGET_REPO" ]]; then
+        echo "[*] Target repo klónozása: $TARGET_REPO"
+        git clone "$TARGET_REMOTE" "$TARGET_CLONE"
+        git -C "$TARGET_CLONE" checkout -b "$FEATURE_BRANCH"
+        echo "[*] Target repo feature branch: $FEATURE_BRANCH"
+    fi
 fi
 
 # --- Prompt összeállítása ---
@@ -130,7 +155,7 @@ Feature branch: \`$FEATURE_BRANCH\`
 - Output dokumentumok: \`$FACTORY_CLONE/jobs/$JOB_ID/output/\`
 - Sub-job specek (ha létrehozol): \`$FACTORY_CLONE/jobs/<sub-job-id>/input.md\` + \`meta.yaml\`
 - Referencia anyagok: \`$FACTORY_CLONE/jobs/$JOB_ID/ref/\`
-- Target cic-mcp-* repo klón (ha kell): \`$WORKSPACE/<repo-neve>/\` (ne commitold)
+$([ -n "$TARGET_REPO" ] && echo "- Target repo klón (\`capability.target_repo: $TARGET_REPO\`): \`$TARGET_CLONE\` — már klónozva, feature/$JOB_ID branch-en. A capability implementáció IDE kerül, nem a cic-mcp-factory klónba.")
 
 A munka végén commitolj és pushol a feature branch-re:
 \`\`\`bash
@@ -138,6 +163,14 @@ git -C $FACTORY_CLONE add jobs/$JOB_ID/output/ jobs/
 git -C $FACTORY_CLONE commit -m \"job: $JOB_ID — output\"
 git -C $FACTORY_CLONE push -u origin $FEATURE_BRANCH
 \`\`\`
+$([ -n "$TARGET_REPO" ] && echo "
+Ha implementáltál a target repóban (\`$TARGET_CLONE\`), azt is commitold és pusholod
+ugyanazon \`$FEATURE_BRANCH\` néven, KÜLÖN PR-ként a target repóban:
+\`\`\`bash
+git -C $TARGET_CLONE add -A
+git -C $TARGET_CLONE commit -m \"capability: $JOB_ID\"
+git -C $TARGET_CLONE push -u origin $FEATURE_BRANCH
+\`\`\`")
 
 Push csak \`$FEATURE_BRANCH\` branch-re. Main-re NEM."
 fi

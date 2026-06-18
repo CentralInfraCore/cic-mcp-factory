@@ -23,11 +23,14 @@ CLONE="jobs/$JOB_ID/workspace/cic-mcp-factory"
 # output fájlok
 cp "$CLONE/jobs/$JOB_ID/output/"*.md "jobs/$JOB_ID/output/"
 
-# sub-job specek (ha az agent hozott létre)
-for job in $(ls "$CLONE/jobs/" | grep -v "^$JOB_ID$"); do
-  mkdir -p "jobs/$job"
-  cp "$CLONE/jobs/$job/input.md" "jobs/$job/"
-  cp "$CLONE/jobs/$job/meta.yaml" "jobs/$job/"
+# sub-job specek (ha az agent hozott létre) — csak valódi job-könyvtárak,
+# nem index.yaml / .schema / egyéb top-level fájl
+for job_dir in $(find "$CLONE/jobs" -mindepth 1 -maxdepth 1 -type d \
+                   ! -name "$JOB_ID" ! -name ".schema" -printf '%f\n'); do
+  [[ -f "$CLONE/jobs/$job_dir/meta.yaml" ]] || continue   # nem job-könyvtár, skip
+  mkdir -p "jobs/$job_dir"
+  cp "$CLONE/jobs/$job_dir/input.md" "jobs/$job_dir/"
+  cp "$CLONE/jobs/$job_dir/meta.yaml" "jobs/$job_dir/"
 done
 ```
 
