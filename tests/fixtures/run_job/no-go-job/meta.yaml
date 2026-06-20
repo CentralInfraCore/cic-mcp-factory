@@ -1,0 +1,23 @@
+schema_version: "1.0"
+job_id: "no-go-job"
+parent_job_id: ""
+level: "capability"
+capability:
+  id: "cic_mcp.test.nogo"
+  target_repo: ""
+  change_type: "fix"
+  status_after_merge: "experimental"
+kb_focus: []
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/test-agent"
+  model: "claude-sonnet-4-6"
+workplace:
+  repos: []
+  branch: "feature/no-go-job"
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-01-01T00:00:00Z"
+  started: ""
+  completed: ""
