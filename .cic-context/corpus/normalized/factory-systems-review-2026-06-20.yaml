@@ -1,0 +1,99 @@
+apiVersion: cic.context/v1
+kind: ExternalSystemReview
+metadata:
+  review_id: "factory-systems-review-2026-06-20"
+  created_at: "2026-06-20T09:05:00+02:00"
+  reviewer: codex
+sources:
+  - system_id: cic-factory-workdir
+    path: "/home/sinkog/sync/claude_factory/CIC/workdir"
+    role: "General CIC agent factory workdir with many historical jobs, docs, hooks and job lifecycle tooling."
+    git_status: "dirty"
+    notable_dirty_state:
+      - "M jobs/wasm-template-release-contracts/input.md"
+      - "?? .idea/"
+      - "?? .playwright-mcp/"
+      - "?? jobs/wasm-template-contracts/output/context-state.md"
+      - "?? jobs/wasm-template-hardening/output/context-state.md"
+  - system_id: cic-mcp-factory
+    path: "/home/sinkog/sync/claude_factory/CIC/cic-mcp-factory"
+    role: "MCP capability build/maintenance factory specialized for the cic-mcp-* family."
+    git_status: "clean"
+    notable_state:
+      - "No capability jobs yet; jobs/index.yaml is empty."
+      - "Contains job schema, Claude commands, run-job/update-index/validate-spec tooling."
+key_findings:
+  - finding_id: fac-0001
+    text: "The general workdir already implements a Git-tracked job lifecycle with orchestrator/agent separation, feature branches, output artifacts and human merge boundary."
+    source_refs:
+      - "/home/sinkog/sync/claude_factory/CIC/workdir/CLAUDE.md"
+    impact: "cic-mcp-session should integrate with this lifecycle rather than inventing a separate job model."
+  - finding_id: fac-0002
+    text: "cic-mcp-factory is already defined as the build/maintenance backend for cic-mcp-* capabilities, not as a runtime gateway."
+    source_refs:
+      - "/home/sinkog/sync/claude_factory/CIC/cic-mcp-factory/CLAUDE.md"
+    impact: "Session-MCP schema/tool work should likely start as a capability-job in cic-mcp-factory."
+  - finding_id: fac-0003
+    text: "validate-spec.sh enforces mechanical NO-GO gates: concrete source, forbidden shortcuts, output filenames, claim-evidence table and reachability artifacts."
+    source_refs:
+      - "/home/sinkog/sync/claude_factory/CIC/cic-mcp-factory/tools/validate-spec.sh"
+      - "/home/sinkog/sync/claude_factory/CIC/cic-mcp-factory/.claude/commands/job-validate.md"
+    impact: "This is an existing proof/evidence contract that should be reused for SessionIngressEnvelope/Postgres schema jobs."
+  - finding_id: fac-0004
+    text: "workdir has Claude hooks for policy gating, event logging, context monitoring and no-ask-human enforcement."
+    source_refs:
+      - "/home/sinkog/sync/claude_factory/CIC/workdir/tools/cic-hooks.json"
+      - "/home/sinkog/sync/claude_factory/CIC/workdir/tools/hooks/log-event.py"
+      - "/home/sinkog/sync/claude_factory/CIC/workdir/tools/hooks/context-monitor.sh"
+      - "/home/sinkog/sync/claude_factory/CIC/workdir/tools/hooks/no-ask-human.sh"
+    impact: "This is the nearest existing implementation seed for hook-to-session ingestion."
+  - finding_id: fac-0005
+    text: "Current hook logging is intentionally lightweight and non-blocking; it writes summary JSONL to jobs/<job-id>/output/events.jsonl."
+    source_refs:
+      - "/home/sinkog/sync/claude_factory/CIC/workdir/tools/hooks/log-event.py"
+    impact: "A future SessionIngressEnvelope collector should preserve this non-blocking property but capture richer raw envelopes."
+  - finding_id: fac-0006
+    text: "cic-mcp-factory run-job.sh clones both the factory repo and capability.target_repo, creates feature/<job-id>, stores Claude session_id and supports --resume."
+    source_refs:
+      - "/home/sinkog/sync/claude_factory/CIC/cic-mcp-factory/tools/run-job.sh"
+    impact: "Session identity already exists at job meta level; this can be bridged to cic-mcp-session session catalog."
+architectural_fit:
+  workdir: "Existing general CIC agent factory and evidence/job lifecycle reference."
+  cic_mcp_factory: "Correct place to create capability jobs for cic-mcp-session, cic-mcp-shared and cic-mcp-gateway."
+  cic_context_store: "Local design scratchpad and handoff layer; should not become a competing factory runtime."
+  cic_mcp_session: "Should consume lifecycle/hook events from factory jobs and expose session-scope retrieval."
+  cic_mcp_shared: "Should later aggregate across these job/session records."
+risks:
+  - risk_id: risk-fac-0001
+    text: "There is a small inconsistency in cic-mcp-factory .claude/commands/job-run.md: it says the running commit comes before agent launch, but the bold sentence says 'agent indítása UTÁN'."
+    severity: medium
+    recommendation: "Clarify command documentation before relying on it as canonical lifecycle instruction."
+  - risk_id: risk-fac-0002
+    text: "run-job.sh still uses regex edits for meta.yaml lifecycle updates, while update-index.sh correctly uses yaml.safe_load."
+    severity: medium
+    recommendation: "Move meta.yaml updates to structured YAML handling before adding more lifecycle fields."
+  - risk_id: risk-fac-0003
+    text: "validate-spec.sh K1/K3/K8 checks are grep-based and useful as gates, but brittle for richer capability classes."
+    severity: low
+    recommendation: "Keep them as mechanical baseline, then add schema-based capability validation for SessionIngressEnvelope/Postgres jobs."
+  - risk_id: risk-fac-0004
+    text: "workdir hook log-event.py summarizes tool events and discards most raw payload detail."
+    severity: medium
+    recommendation: "Do not use current events.jsonl as the final session source-of-truth; create a richer envelope collector."
+recommended_next_jobs:
+  - job_id: "session-ingress-envelope-001"
+    target_repo: "cic-mcp-session"
+    factory: "cic-mcp-factory"
+    objective: "Define SessionIngressEnvelope schema and validation rules."
+  - job_id: "session-postgres-store-001"
+    target_repo: "cic-mcp-session"
+    factory: "cic-mcp-factory"
+    objective: "Draft PostgreSQL schemas: session_raw, session_core, session_idx, session_jobs, session_api."
+  - job_id: "session-hook-collector-001"
+    target_repo: "cic-mcp-session"
+    factory: "cic-mcp-factory"
+    objective: "Turn current lightweight hook event logging pattern into non-blocking SessionIngressEnvelope push/write path."
+  - job_id: "factory-session-bridge-001"
+    target_repo: "cic-mcp-factory"
+    factory: "cic-mcp-factory"
+    objective: "Add job meta/session_id/event output conventions that cic-mcp-session can ingest deterministically."

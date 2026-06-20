@@ -1,0 +1,102 @@
+apiVersion: cic.context/v1
+kind: SourceReview
+metadata:
+  review_id: "thead-review-2026-06-20"
+  created_at: "2026-06-20T08:45:00+02:00"
+  reviewer: codex
+sources:
+  - path: "../../thead01.txt"
+    lines: 5027
+    role: "deep technical design thread"
+  - path: "../../thead02.txt"
+    lines: 1582
+    role: "pitch, trust-boundary and MCP namespace thread"
+  - path: "../../thead04.txt"
+    lines: 5060
+    role: "overlapping Claude/Codex and session-MCP design thread"
+observations:
+  - id: obs-0001
+    text: "thead01 and thead04 contain substantial overlap around Claude/Codex runtime roles and cic-mcp-session design."
+    impact: "Deduplication is required before any RAG corpus build."
+  - id: obs-0002
+    text: "thead02 is strongest for narrative, CIC/MCP namespace, human merge legitimacy, gateway/source layering, and public MCP positioning."
+    impact: "Use it as architecture narrative input, not as low-level session storage design."
+  - id: obs-0003
+    text: "The session-MCP design evolves from rich semantic extraction toward lightweight session-local vector retrieval plus metadata."
+    impact: "Older deep-extraction proposals should be marked superseded at session layer."
+key_decisions_extracted:
+  - decision_id: dec-thead-0001
+    text: "cic-mcp-session should be a session-scope retrieval layer, not shared memory and not a canonical knowledge graph."
+    source_refs:
+      - "thead01.txt:3591"
+      - "thead01.txt:3765"
+      - "thead01.txt:4439"
+    status: accepted_in_source_threads
+    canonical: false
+  - decision_id: dec-thead-0002
+    text: "The hook should not semantically interpret; it should only wrap provider payload into a formal SessionIngressEnvelope."
+    source_refs:
+      - "thead01.txt:888"
+      - "thead01.txt:1020"
+      - "thead01.txt:1250"
+    status: accepted_in_source_threads
+    canonical: false
+  - decision_id: dec-thead-0003
+    text: "For 100-1000 MB of session data, the live store should not be PKL snapshots; use a DB-backed retrieval store."
+    source_refs:
+      - "thead01.txt:4218"
+      - "thead01.txt:4439"
+    status: accepted_in_source_threads
+    canonical: false
+  - decision_id: dec-thead-0004
+    text: "PostgreSQL is the preferred first serious backend: event store, outbox queue, FTS, pgvector, metadata, session-scope API."
+    source_refs:
+      - "thead01.txt:4448"
+      - "thead01.txt:4800"
+      - "thead01.txt:5024"
+    status: accepted_in_source_threads
+    canonical: false
+  - decision_id: dec-thead-0005
+    text: "cic-mcp-gateway is a trust-domain aware context compiler, not a generic search proxy."
+    source_refs:
+      - "thead02.txt:1007"
+      - "thead02.txt:1247"
+    status: accepted_in_source_threads
+    canonical: false
+  - decision_id: dec-thead-0006
+    text: "The AI/factory may create, validate, review and summarize PRs, but human merge remains the legitimacy boundary."
+    source_refs:
+      - "thead02.txt:498"
+      - "thead02.txt:676"
+    status: accepted_in_source_threads
+    canonical: false
+superseded_or_narrowed:
+  - item_id: sup-0001
+    old_direction: "session-MCP performs deep AI extraction of decisions, claims, assumptions, rejected ideas and semantic graph inside each session."
+    new_direction: "session-MCP stores raw/timeline/chunks/embeddings/metadata and lightweight markers; deep consolidation moves to cic-mcp-shared."
+    reason: "Token cost and 100-1000 MB scale make per-session deep extraction too expensive."
+  - item_id: sup-0002
+    old_direction: "PKL/FAISS artifact set is the primary live session store."
+    new_direction: "PKL can be export/snapshot only; live store should be PostgreSQL-backed or equivalent DB-backed retrieval store."
+    reason: "Large multi-session data requires queryable, partitioned, incrementally maintained storage."
+  - item_id: sup-0003
+    old_direction: "MCP tool interface is also the write path."
+    new_direction: "Write path is ingest API/event pipeline; MCP tools are read-side context API."
+    reason: "CQRS boundary keeps hooks and agent-facing reads stable."
+architecture_summary:
+  session_layer: "raw event archive + timeline + chunk store + FTS/vector/metadata/provenance indexes; default scope is one session."
+  shared_layer: "cross-session weighting, clustering, conflict detection, recurring concepts, factory/PR/artifact joins, promotion candidates."
+  knowledge_layer: "reviewed and promoted canonical knowledge."
+  gateway_layer: "trust-domain aware context compiler over knowledge, workdir, session, shared and factory sources."
+  factory_layer: "build/maintenance backend for MCP capabilities with PR/evidence/human merge lifecycle."
+rag_implications:
+  - "Do not embed thead01/thead04 naively without deduplication."
+  - "Prefer ChatGPT conversations.json or provider JSONL as historical event source when available."
+  - "Markdown exports are useful as human-readable backup and bootstrap corpus."
+  - "Chunk metadata must include session_id, source_file, role if known, created_at if known, provider, source hash and workstream."
+  - "Vector retrieval must be filtered by session_id by default; cross-session retrieval belongs to shared."
+recommended_next_actions:
+  - "Create formal SessionIngressEnvelope schema."
+  - "Create PostgreSQL schema draft for session_raw, session_core, session_idx, session_jobs and session_api."
+  - "Create importer design for ChatGPT conversations.json -> SessionIngressEnvelope JSONL."
+  - "Deduplicate thead01/thead04 before producing first chunk corpus."

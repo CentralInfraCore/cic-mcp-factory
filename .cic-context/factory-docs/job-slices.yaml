@@ -1,0 +1,308 @@
+apiVersion: cic.factory/v1
+kind: FactoryJobSliceList
+metadata:
+  created_at: "2026-06-20T09:20:00+02:00"
+  purpose: "Claude/factory compatible job decomposition for cic-mcp-* implementation."
+rules:
+  normative_contract: ".cic-context/factory-docs/acceptance-contract.md"
+  one_job_should_do:
+    - "one repo target"
+    - "one primary contract or implementation slice"
+    - "one output report"
+    - "one claim-evidence table"
+  one_job_should_not_do:
+    - "session and gateway implementation together"
+    - "schema design and full runtime implementation together"
+    - "historical import before ingress/storage contract is stable"
+    - "deep shared-memory AI extraction inside session jobs"
+  context_budget:
+    max_input_sources: 5
+    prefer_review_artifacts_over_raw_theads: true
+    include_target_repo_paths: true
+    include_exact_output_files: true
+  mandatory_gates:
+    - "target repo path is explicit"
+    - "status_after_merge is justified"
+    - "output filenames are explicit"
+    - "claim-evidence table is required"
+    - "forbidden shortcuts are listed"
+    - "Definition of Done is checkable"
+jobs:
+  - job_id: "session-repo-baseline-audit-001"
+    phase: "1A"
+    target_repo: "cic-mcp-session"
+    change_type: "enhancement"
+    status_after_merge: "experimental"
+    bootstrap_status: "done_out_of_band_2026-06-20"  # cic-mcp-session repo created from base-repo
+                                                       # mcp/main, README/CLAUDE.md customized via PR.
+                                                       # This job's audit can now run for real — the
+                                                       # repo previously did not exist at all.
+    goal: "Audit existing cic-mcp-session scaffold and classify what is implemented/scaffold/concept."
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#cic-mcp-session"
+      - ".cic-context/factory-docs/execution-phases.md#Phase 1A"
+      - ".cic-context/corpus/normalized/thead-review-2026-06-20.yaml"
+      - "target repo path for cic-mcp-session"
+    output_files:
+      - "output/session-baseline-audit.md"
+    acceptance_gates:
+      - "Report classifies every observed major component as implemented/scaffold/concept/missing."
+      - "Every implemented claim has runtime or reachability evidence."
+      - "Report includes a NO-GO list for anything unsafe to build on."
+      - "Report proposes the next 3 factory jobs."
+    required_evidence:
+      - "File/path evidence for every existing component claim."
+      - "Reachability evidence for any implemented/runtime claim."
+      - "Explicit scaffold/concept classification."
+    forbidden_shortcuts:
+      - "file existence != implemented"
+      - "README claim != runtime capability"
+
+  - job_id: "gateway-repo-baseline-or-bootstrap-001"
+    phase: "1B"
+    target_repo: "cic-mcp-gateway"
+    change_type: "new_capability"
+    status_after_merge: "experimental"
+    bootstrap_status: "done_out_of_band_2026-06-20"  # cic-mcp-gateway repo created from base-repo
+                                                       # mcp/main, README/CLAUDE.md customized via PR.
+                                                       # Remaining scope: audit + GatewayContextEnvelope
+                                                       # boundary report, not bootstrap.
+    goal: "Establish or audit cic-mcp-gateway as a separate component from day one."
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#cic-mcp-gateway"
+      - ".cic-context/factory-docs/execution-phases.md#Phase 1B"
+      - ".cic-context/corpus/normalized/thead-review-2026-06-20.yaml"
+    output_files:
+      - "output/gateway-baseline.md"
+    acceptance_gates:
+      - "Report states whether repo exists or must be bootstrapped."
+      - "Report defines minimal gateway responsibility without implementing session storage."
+      - "Report contains source registry and GatewayContextEnvelope initial boundary."
+      - "Report proposes next gateway contract job."
+    required_evidence:
+      - "Repo status: exists/scaffold/bootstrap-required."
+      - "Minimal source registry and GatewayContextEnvelope responsibilities."
+      - "Explicit statement that gateway is not a generic proxy."
+    forbidden_shortcuts:
+      - "route_query == search_all"
+      - "gateway stores session raw data"
+
+  - job_id: "session-ingress-envelope-contract-001"
+    phase: "1A"
+    target_repo: "cic-mcp-session"
+    change_type: "new_capability"
+    status_after_merge: "experimental"
+    goal: "Define SessionIngressEnvelope schema and validation rules."
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#Postgres-first elv"
+      - ".cic-context/factory-docs/architecture.md#Trust modell"
+      - ".cic-context/corpus/normalized/thead-review-2026-06-20.yaml"
+      - ".cic-context/corpus/normalized/factory-systems-review-2026-06-20.yaml"
+    output_files:
+      - "output/session-ingress-envelope-contract.md"
+      - "output/session-ingress-envelope.schema.yaml"
+    acceptance_gates:
+      - "Schema includes apiVersion, kind, event identity, provider identity, source, payload, trust and raw preservation fields."
+      - "Schema forbids canonical=true and interpreted=true at ingress level."
+      - "Report defines idempotency key construction."
+      - "Report includes at least 2 valid and 2 invalid envelope examples."
+    required_evidence:
+      - "Envelope fields: provider, provider_session_id, event_name, timestamps, payload, trust, interpreted=false."
+      - "Idempotency key strategy."
+      - "Raw payload preservation rule."
+    forbidden_shortcuts:
+      - "hook semantically interprets decisions/claims"
+      - "canonical=true allowed in session ingress"
+
+  - job_id: "gateway-context-envelope-contract-001"
+    phase: "1B"
+    target_repo: "cic-mcp-gateway"
+    change_type: "new_capability"
+    status_after_merge: "experimental"
+    goal: "Define GatewayContextEnvelope for agent-facing compiled context."
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#cic-mcp-gateway"
+      - ".cic-context/factory-docs/execution-phases.md#Phase 1B"
+      - ".cic-context/corpus/normalized/thead-review-2026-06-20.yaml"
+    output_files:
+      - "output/gateway-context-envelope-contract.md"
+      - "output/gateway-context-envelope.schema.yaml"
+    acceptance_gates:
+      - "Schema includes sources_used, trust_summary, conflicts, proof_requirements and refs."
+      - "Report distinguishes canonical/workdir/session/shared sections."
+      - "Report states gateway does not own raw storage or embedding store."
+      - "Report includes at least 2 valid and 2 invalid envelope examples."
+    required_evidence:
+      - "Sources used, trust levels, conflicts, proof requirements, refs."
+      - "Separation from source-specific MCP APIs."
+    forbidden_shortcuts:
+      - "gateway returns raw vector hits without trust envelope"
+
+  - job_id: "session-postgres-storage-design-001"
+    phase: "3"
+    target_repo: "cic-mcp-session"
+    change_type: "new_capability"
+    status_after_merge: "experimental"
+    goal: "Design PostgreSQL schemas for session_raw/session_core/session_idx/session_jobs/session_api."
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#Schema szeparacio"
+      - ".cic-context/factory-docs/architecture.md#Inheritance / partitioning allaspont"
+      - ".cic-context/factory-docs/execution-phases.md#Phase 3"
+    output_files:
+      - "output/session-postgres-storage-design.md"
+      - "output/session-postgres-schema.sql"
+    acceptance_gates:
+      - "SQL draft contains session_raw, session_core, session_idx, session_jobs and session_api schemas."
+      - "Report explains trigger/outbox boundaries."
+      - "Report lists indexes for session_id, metadata, FTS and vector lookup."
+      - "Report explicitly decides partitioning/inheritance approach for v1."
+      - "Report lists what remains outside Postgres in workers."
+    required_evidence:
+      - "DDL sketch for each schema."
+      - "Trigger/outbox boundaries."
+      - "FTS/vector/metadata index strategy."
+      - "What remains in workers."
+    forbidden_shortcuts:
+      - "trigger calls external LLM/HTTP"
+      - "one global chunks.pkl as live store"
+
+  - job_id: "gateway-session-adapter-contract-001"
+    phase: "2"
+    target_repo: "cic-mcp-gateway"
+    change_type: "new_capability"
+    status_after_merge: "experimental"
+    goal: "Define how gateway consumes session.context_pack without owning session storage."
+    required_context:
+      - ".cic-context/factory-docs/execution-phases.md#Phase 2"
+      - ".cic-context/factory-docs/architecture.md#Fo hatarok"
+    output_files:
+      - "output/gateway-session-adapter-contract.md"
+    acceptance_gates:
+      - "Adapter contract uses session API/MCP boundary, not direct session tables."
+      - "Report maps session_derived trust into GatewayContextEnvelope."
+      - "Report defines unavailable-session behavior."
+      - "Report includes an example compile_context response using session source."
+    required_evidence:
+      - "session source adapter input/output."
+      - "Error/conflict behavior when session source is unavailable."
+      - "Trust mapping from session_derived to gateway envelope."
+    forbidden_shortcuts:
+      - "gateway queries session tables directly"
+
+  - job_id: "factory-session-bridge-001"
+    phase: "2"
+    target_repo: "cic-mcp-factory"
+    change_type: "enhancement"
+    status_after_merge: "experimental"
+    goal: "Define factory job/session metadata conventions that cic-mcp-session can ingest."
+    required_context:
+      - ".cic-context/corpus/normalized/factory-systems-review-2026-06-20.yaml"
+      - ".cic-context/factory-docs/architecture.md#Factory legitimacio"
+    output_files:
+      - "output/factory-session-bridge.md"
+    acceptance_gates:
+      - "Report identifies required meta.yaml/session fields."
+      - "Report states why current events.jsonl is not enough."
+      - "Report proposes bridge from factory job lifecycle to SessionIngressEnvelope."
+      - "Report includes migration/compatibility plan for existing jobs."
+    required_evidence:
+      - "meta.yaml fields needed for session catalog."
+      - "events.jsonl limitations."
+      - "SessionIngressEnvelope bridge proposal."
+    forbidden_shortcuts:
+      - "current events.jsonl is final source-of-truth"
+
+  - job_id: "shared-session-catalog-consumer-001"
+    phase: "4"
+    target_repo: "cic-mcp-shared"
+    change_type: "new_capability"
+    status_after_merge: "experimental"
+    goal: "Define how cic-mcp-shared consumes the cic-mcp-session catalog without becoming the first source of truth."
+    prerequisites:
+      - "session-ingress-envelope-contract-001"
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#cic-mcp-shared"
+      - ".cic-context/factory-docs/execution-phases.md#Phase 4"
+    output_files:
+      - "output/shared-session-catalog-consumer.md"
+    acceptance_gates:
+      - "Report confirms prerequisites are complete or marks job NO-GO."
+      - "Report uses session API/MCP boundary, not direct session table access."
+      - "Report defines what shared persists vs. what it queries live from session."
+      - "Report states shared remains non-canonical (trust: mixed/candidate/reviewed_shared)."
+    required_evidence:
+      - "session source adapter input/output for shared."
+      - "Explicit trust: false for canonical at this layer."
+    forbidden_shortcuts:
+      - "shared is the first source of truth for session data"
+      - "shared promotes content to canonical without human review"
+
+  - job_id: "shared-cross-session-search-001"
+    phase: "4"
+    target_repo: "cic-mcp-shared"
+    change_type: "new_capability"
+    status_after_merge: "experimental"
+    goal: "Design cross-session search/aggregation over the session catalog consumer from shared-session-catalog-consumer-001."
+    prerequisites:
+      - "shared-session-catalog-consumer-001"
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#cic-mcp-shared"
+      - ".cic-context/factory-docs/execution-phases.md#Phase 4"
+    output_files:
+      - "output/shared-cross-session-search.md"
+    acceptance_gates:
+      - "Report confirms prerequisites are complete or marks job NO-GO."
+      - "Report defines recurring-concept detection without semantic claim extraction at ingestion."
+      - "Report defines conflict/superseded candidate handling."
+    required_evidence:
+      - "Cross-session query shape and ranking approach."
+      - "Conflict/superseded candidate data model."
+    forbidden_shortcuts:
+      - "cross-session search treated as canonical knowledge graph"
+      - "deep semantic claim extraction performed inside the session layer"
+
+  - job_id: "shared-weighting-model-001"
+    phase: "4"
+    target_repo: "cic-mcp-shared"
+    change_type: "new_capability"
+    status_after_merge: "experimental"
+    goal: "Define the weighting/promotion-candidate model for cic-mcp-shared (factory job/PR/artifact linkage)."
+    prerequisites:
+      - "shared-cross-session-search-001"
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#cic-mcp-shared"
+      - ".cic-context/factory-docs/architecture.md#Factory legitimacio"
+    output_files:
+      - "output/shared-weighting-model.md"
+    acceptance_gates:
+      - "Report defines weighting factors (recurrence, factory/PR/artifact linkage, recency)."
+      - "Report defines promotion_candidate criteria, distinct from canonical promotion itself."
+      - "Report states promotion to cic-mcp-knowledge requires human review (thead02)."
+    required_evidence:
+      - "Weighting factor list with rationale."
+      - "promotion_candidate schema fields."
+    forbidden_shortcuts:
+      - "shared auto-promotes a candidate to canonical without human review"
+
+  - job_id: "historical-chatgpt-export-importer-001"
+    phase: "5"
+    target_repo: "cic-mcp-session"
+    change_type: "new_capability"
+    status_after_merge: "experimental"
+    goal: "Design historical ChatGPT export importer after ingress and storage contracts are stable."
+    prerequisites:
+      - "session-ingress-envelope-contract-001"
+      - "session-postgres-storage-design-001"
+    output_files:
+      - "output/historical-chatgpt-importer-design.md"
+    acceptance_gates:
+      - "Report confirms prerequisites are complete or marks job NO-GO."
+      - "Report maps conversations.json structure to SessionIngressEnvelope."
+      - "Report defines dedupe/idempotency."
+      - "Report treats markdown export as backup, not source-of-truth when structured export exists."
+    required_evidence:
+      - "conversations.json traversal strategy."
+      - "message -> SessionIngressEnvelope mapping."
+      - "dedupe/idempotency."
+    forbidden_shortcuts:
+      - "markdown export as source-of-truth when structured export exists"
