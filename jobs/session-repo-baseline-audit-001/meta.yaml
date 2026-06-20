@@ -16,9 +16,9 @@ agent:
 workplace:
   repos: []
   branch: "feature/session-repo-baseline-audit-001"
-status: "agent_done"
+status: "done"
 error_message: ""
 timestamps:
   created: "2026-06-20T13:00:11Z"
   started: "2026-06-20T13:05:11Z"
-  completed: "2026-06-20T13:18:21Z"
+  completed: "2026-06-20T13:19:06Z"
