@@ -4,7 +4,7 @@
 
 A `cic-mcp-session` infra-pipelinje most már futtatható (`session-infra-pipeline-fix-001`
 lezárva) — eddig viszont semmilyen session-specifikus contract nincs a repóban, csak az
-örökölt MCP-szerver scaffold (`session-repo-baseline-audit-001` audit szerint). Ez a job az
+örökölt MCP-szerver alapváz. Ez a job az
 ELSŐ valódi tartalmi session-capability: a `SessionIngressEnvelope` schema formális
 definíciója — az a formátum, amibe minden jövőbeli hook/import/provider payload-ot
 csomagolni kell, MIELŐTT bármi session-store-ba kerülne.
@@ -151,6 +151,9 @@ fájlban tényleg jelen van és a leírt szabályt tényleg kikényszeríti", NE
 
 ## Forbidden Shortcuts
 
+- a schema fájl létezése nem bizonyítja, hogy a benne leírt validációs szabály tényleg
+  kikényszerítve van — a konkrét enum/pattern/required mezőt kell idézni, nem csak azt
+  hogy a fájl megvan
 - a hook szemantikusan interpretál döntéseket/állításokat — ez TILOS ingress szinten, a
   schema-nak ezt nem szabad megengednie semmilyen mezőkombinációval
 - `canonical: true` megengedett session ingress szinten — TILOS, a schema validációs
