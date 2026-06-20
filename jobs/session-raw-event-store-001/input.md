@@ -91,6 +91,23 @@ write-path NEM engedi át hibátlanul — vagy alkalmazás-szintű validációva
 vagy a DB CHECK constraint hibáját kezeli le graceful módon (nem nyers stacktrace-szel
 crashel). Mindkét megközelítés elfogadható, válassz egyet és indokold.
 
+### 4b. Reachability ellenőrzés (kötelező)
+
+Ez a job NEM köti be a write-path-ot semmilyen production hívóba (a `mcp-server/server.py`
+átírása explicit "Nem cél", lásd lent) — ez a write-path EBBEN a jobban csak a saját
+tesztjei által hívott. Ezt EXPLICIT írd le a reportban, NE állítsd hogy "production
+hívva van", ha nincs.
+
+Futtasd:
+```bash
+grep -rn "<write_path_function_name>" --include="*.py" . | grep -v "test_" | grep -v "/tests/"
+```
+
+Ha a `grep -rn` eredmény 0 production hívást ad (csak a definíció helyét), ezt a reportban
+explicit `scaffold`-ként jelöld a "production reachability" claim-re — a write-path KÓD
+létezik és TESZTELT, de nincs még production hívási láncban. Ha bármilyen más fájl
+(pl. egy jövőbeli hook) már hívja, idézd a file:line-t.
+
 ### 5. Tesztek
 
 Írj pytest teszteket, amik a VALÓDI Postgres konténer ellen futnak (nem mock-olt
@@ -139,7 +156,9 @@ A report MUST kövesse az `.cic-context/factory-docs/acceptance-contract.md`
 ## Next Jobs
 ```
 
-Elfogadott `Status` értékek: `proven`, `partial`, `missing`, `rejected`, `unknown`. Itt
+Elfogadott `Status` értékek: `proven`, `partial`, `scaffold`, `missing`, `rejected`,
+`unknown` (`scaffold` a "kód létezik, teszt zöld, de nincs production hívási láncban"
+claim-re használandó, lásd "Reachability ellenőrzés"). Itt
 `proven` KIZÁRÓLAG akkor használható, ha a tényleges teszt-futtatás kimenete idézve van —
 valódi Postgres ellen, nem mock-olt kapcsolattal.
 
@@ -155,10 +174,14 @@ valódi Postgres ellen, nem mock-olt kapcsolattal.
 - [ ] `interpreted: true` elutasítás teszt lefuttatva, kimenet idézve
 - [ ] a teszt-futtatás reprodukálható egy dokumentált paranccsal (konténer-indítástól
       pytest-ig)
+- [ ] reachability `grep -rn` eredmény idézve, és a production hívási lánc állapota
+      (van/nincs) explicit `proven`/`scaffold`-ként jelölve, file:line-nal ha van hívó
 - [ ] claim-evidence tábla kitöltve, nem üres
 
 ## Forbidden Shortcuts
 
+- a write-path fájl létezése nem bizonyítja, hogy tényleg beír a session_raw táblába —
+  csak a tényleges, idézett teszt-futtatás
 - mock-olt DB-kapcsolat ≠ működő write-path bizonyítéka — minden `proven` állításhoz VALÓDI
   Postgres ellen futtatott teszt kimenete kell
 - "az UNIQUE constraint kezeli, nem kell rá teszt" ≠ elfogadható — az idempotencia tesztet
