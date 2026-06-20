@@ -1,0 +1,24 @@
+schema_version: "1.0"
+job_id: "resume-no-session"
+parent_job_id: ""
+level: "capability"
+capability:
+  id: "cic_mcp.test.resume"
+  target_repo: ""
+  change_type: "fix"
+  status_after_merge: "experimental"
+kb_focus: []
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/test-agent"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: []
+  branch: "feature/resume-no-session"
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-01-01T00:00:00Z"
+  started: ""
+  completed: ""

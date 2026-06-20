@@ -14,3 +14,5 @@ jobs/*/workspace-saved/
 
 # Hook telemetria az élő workdir-ben futás közben
 jobs/*/output/events.jsonl
+__pycache__/
+.pytest_cache/
