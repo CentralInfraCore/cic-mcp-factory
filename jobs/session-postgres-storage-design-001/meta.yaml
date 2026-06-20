@@ -1,0 +1,24 @@
+schema_version: "1.0"
+job_id: "session-postgres-storage-design-001"
+parent_job_id: "session-ingress-envelope-contract-001"
+level: "capability"
+capability:
+  id: "cic_mcp.session.postgres_storage_design"
+  target_repo: "cic-mcp-session"
+  change_type: "new_capability"
+  status_after_merge: "experimental"
+kb_focus: ["cic-mcp-session", "postgres-first", "session-raw", "trust-domain"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: []
+  branch: "feature/session-postgres-storage-design-001"
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-06-20T20:42:32Z"
+  started: ""
+  completed: ""
