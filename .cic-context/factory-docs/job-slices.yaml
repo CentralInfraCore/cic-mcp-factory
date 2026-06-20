@@ -166,6 +166,33 @@ jobs:
       - "trigger calls external LLM/HTTP"
       - "one global chunks.pkl as live store"
 
+  - job_id: "session-raw-event-store-001"
+    phase: "3"
+    target_repo: "cic-mcp-session"
+    change_type: "new_capability"
+    status_after_merge: "experimental"
+    goal: "Implement the write-path that applies session-postgres-schema.sql against a real Postgres instance and persists SessionIngressEnvelope instances into session_raw.envelopes."
+    prerequisites:
+      - "session-ingress-envelope-contract-001"
+      - "session-postgres-storage-design-001"
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#Postgres-first elv"
+      - ".cic-context/factory-docs/execution-phases.md#Phase 3"
+    output_files:
+      - "output/session-raw-event-store-report.md"
+    acceptance_gates:
+      - "Write-path code applies session-postgres-schema.sql against a real Postgres instance (docker-compose or ephemeral container) and all 5 schemas are created without error."
+      - "A function/module accepts a SessionIngressEnvelope-shaped object and inserts it into session_raw.envelopes after validating required fields."
+      - "Re-inserting the same idempotency_key is a no-op, not a duplicate row and not an unhandled exception."
+      - "Attempting to persist canonical=true or interpreted=true is rejected without crashing the write path."
+      - "Tests run against a real Postgres instance, not a mocked connection, and are reproducible by a documented command."
+    required_evidence:
+      - "Actual test run output: schema creation, insert, idempotency dedup, canonical/interpreted rejection — quoted, not paraphrased."
+      - "The exact docker-compose/test-fixture setup used, reproducible by a documented command."
+    forbidden_shortcuts:
+      - "mocked database connection as proof of a working write-path"
+      - "skipping the idempotency test because 'the UNIQUE constraint handles it'"
+
   - job_id: "gateway-session-adapter-contract-001"
     phase: "2"
     target_repo: "cic-mcp-gateway"
