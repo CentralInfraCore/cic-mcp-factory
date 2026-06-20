@@ -55,13 +55,21 @@ agent:      olvas jobs/<job-id>/ → tervez + implementál + tesztel → ír out
               → commitol + pushol feature/<job-id> (factory ÉS minden módosított target repo)
             → status: agent_done (a Claude folyamat lefutott — exit code 0 ≠ kész capability-job)
 orchestrátor: /job-close — run-evidence.md ellenőrzés (push tényleg megtörtént-e), output review
-              → státusz agent_done → done CSAK review után
+              → close/<job-id> branch: output áthozása + státusz agent_done → done a branch-en
+              → PR nyitása (cic-mcp-factory ÉS minden módosított target repo, KÜLÖN PR-ek)
               → review GitHubon → merge main (kizárólag emberi/orchestrátor jog)
               → registry/target repo frissítése a kész capability-vel
 ```
 
 A legfontosabb szabály (thead02): **az AI gyártja és validálja a capability-t, de a legitimáció
 (merge) mindig embernél/orchestrátornál marad.** A factory nem mergel önmagába.
+
+**Nincs kivétel "csak audit/csak bookkeeping" alapon.** A `done`-ra zárás — a cic-mcp-factory
+saját job-tracking-ja is — MINDIG PR-en megy `main`-re, sosem direkt `git push`-szal az
+orchestrátor session-éből. A `main`-re kerülés ténye (= PR merge) maga a legitimációs aktus;
+ha ez kimarad, a job lezárása nincs GitHub-on review-zhető állapotban, csak az orchestrátor
+saját állítása alapján — pont az a hiba, amit a `agent_done ≠ done` szétválasztás eleve
+ki akar zárni.
 
 ### Státusz lifecycle
 
@@ -74,6 +82,11 @@ pending → running → agent_done → done
 vagy Agent tool sikeres visszatérése) nem bizonyítja hogy az output teljes, a target repo
 push megtörtént, és a "Kötelező PR-tartalom" minden pontja megvan. `done`-ra csak
 `/job-close` zár, evidence-ellenőrzés után — lásd `.claude/commands/job-close.md`.
+
+A `status: "done"` mező a `close/<job-id>` branch-en kerül be a meta.yaml-ba, NEM a live
+`main`-en. A job a `main`-en ténylegesen addig `agent_done`, amíg a `close/<job-id>` PR
+nincs mergelve — a meta.yaml `main`-en látható állapota és a "valódi" lezártság-állapot
+emiatt rövid ideig eltérhet, ez szándékos, nem hiba.
 
 ### Két indítási mód
 
@@ -92,7 +105,11 @@ nem azt hogy MIT kell klónozni.
 
 A Vault-aláírt commit maga az igazolás (`commit-msg` hook, `cic-my-sign-key`).
 Az agent a klónból commitol és pushol a feature branch-re — review artifact, nem véglegesítés.
-Push `main`-re kizárólag az orchestrátor joga.
+Push `main`-re kizárólag az orchestrátor joga — **de ez is PR-en megy, nem direkt
+`git push origin main`-en.** A "kizárólag az orchestrátor joga" azt jelenti, hogy csak az
+orchestrátor mergelhet, nem azt, hogy az orchestrátor commitolhat direktbe `main`-re. A
+PR maga a review-artifact + a merge a legitimációs aktus — ha ez kimarad, nincs GitHub-on
+látható nyoma annak, hogy mi és miért került be a `main`-be.
 
 ---
 
@@ -234,6 +251,10 @@ ami ellen ezeket meg lehetne tervezni):
 - target repo diff validation (mit szabad/nem szabad módosítania egy capability-jobnak a target repóban)
 - claim-evidence tábla parser (jelenleg csak vizuálisan ellenőrzött `/job-review`-nál)
 - PR readiness checker (gépi GO/NO-GO a teljes "Kötelező PR-tartalom" listára, nem csak a spec-re)
+- automatizált tesztek a factory tooling-ra (`run-job.sh`, `update-index.sh`, `validate-spec.sh`
+  jelenleg csak manuálisan/futtatással ellenőrzött, nincs hozzájuk bats/pytest suite) — cél,
+  hogy ahogy a kapacitás-jobok is teszteket termelnek a target repókban, úgy a factory saját
+  lifecycle-tooling-ja is kapjon regressziós védelmet
 
 ---
 

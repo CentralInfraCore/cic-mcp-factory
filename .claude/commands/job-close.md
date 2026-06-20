@@ -42,10 +42,19 @@ Olvasd el a fő output fájlokat. Lásd `/job-review` skill az értékelési sza
 Ellenőrizd a "Kötelező PR-tartalom" listát a CLAUDE.md-ből (miért kellett, milyen contract,
 milyen teszt, milyen státusz, milyen registry/target-repo diff).
 
-### 3. Output áthozása live workdir-ba
+### 3. Output áthozása — KÜLÖN BRANCH-RE, NEM main-re
+
+**A `done`-ra zárás MINDIG PR-en megy, sosem direkt commit `main`-re.** Ugyanaz a
+legitimációs elv vonatkozik a job-lezárásra, mint a capability-target-repo implementációra:
+"AI gyártja és validálja, de nem legitimál" — a `main`-re kerülés (= `done` állapot
+életbe lépése) emberi PR-merge-höz van kötve, nem az orchestrátor saját `git push`-ához.
 
 ```bash
+JOB_ID="<job-id>"
 CLONE="jobs/$JOB_ID/workspace/cic-mcp-factory"
+
+git checkout main && git pull --ff-only
+git checkout -b "close/$JOB_ID"
 
 # output fájlok
 cp "$CLONE/jobs/$JOB_ID/output/"*.md "jobs/$JOB_ID/output/"
@@ -62,35 +71,46 @@ done
 ```
 
 Ha a job egy target cic-mcp-* repóba is implementált (`capability.target_repo`), az a változás
-a target repo saját feature branch-én van — review és merge ott, külön PR-ben (lásd
-"Kötelező PR-tartalom").
+a target repo saját feature branch-én van — review és merge ott, KÜLÖN PR-ben (lásd
+"Kötelező PR-tartalom"). Ez a `close/$JOB_ID` branch csak a cic-mcp-factory saját
+job-tracking-ját zárja, nem helyettesíti a target-repo PR-t.
 
-### 4. agent_done → done (live meta.yaml) — csak 1–3 lépés után, ha minden PASS
+### 4. agent_done → done — a `close/$JOB_ID` branch-en, NEM a live main-en
 
 ```python
+# jobs/$JOB_ID/meta.yaml, a close/$JOB_ID branch-en
 status: "done"
 timestamps.completed: "<ISO 8601 now>"
 ```
 
 Ha az 1. vagy 2. lépésben hiányt találtál: **NE írj `done`-t.** Hagyd `agent_done`-on
-(vagy `error`-ra, ha a hiány blokkoló), és indítsd újra a jobot a hiány pótlására.
+(vagy `error`-ra, ha a hiány blokkoló), törölt a `close/$JOB_ID` branch-et, és indítsd
+újra a jobot a hiány pótlására.
 
-### 5. Commit és push
+### 5. Commit, push, PR — ez zárja a jobot
 
 ```bash
 bash tools/update-index.sh
 git add jobs/$JOB_ID/ jobs/<sub-job-id>/ jobs/index.yaml
 git commit -m "job: $JOB_ID — done + output"
-git push
+git push -u origin "close/$JOB_ID"
+gh pr create --title "job: $JOB_ID — close (done)" --body "..."
 ```
 
-### 6. Workspace takarítás (opcionális)
+A PR body-ban röviden idézd a run-evidence eredményt és a fő findings-eket — ez a
+review-artifact, amit a merge előtt át lehet nézni. **A job csak akkor `done` a valóságban,
+amikor ezt a PR-t valaki (ember/orchestrátor) mergeli `main`-re.** A meta.yaml-ban a
+`status: "done"` addig csak a branch-en él, a live `main`-en a job `agent_done` marad,
+amíg a PR nincs mergelve.
+
+### 6. Workspace takarítás (opcionális, a PR push UTÁN)
 
 ```bash
 rm -rf jobs/$JOB_ID/workspace
 ```
 
-A workspace gitignored, de helyet foglal. Törölhető ha az output már a live workdir-ban van.
+A workspace gitignored, de helyet foglal. Törölhető ha az output már a `close/$JOB_ID`
+branch-en pusholva van.
 
 ## Hibák amiket el kell kerülni
 
@@ -100,3 +120,6 @@ A workspace gitignored, de helyet foglal. Törölhető ha az output már a live 
 - ❌ done commit előtt nem futtatni `update-index.sh`-t
 - ❌ A `capability.status_after_merge` mezőt (experimental/candidate/canonical) figyelmen kívül hagyni a target-repo PR-jénél
 - ❌ `done`-t írni úgy, hogy a `run-evidence.md` szerint a target repo `NOT PUSHED`
+- ❌ **A `done`-lezárást direkt `main`-re pusholni PR nélkül** — ez minden job-lezárásra
+  vonatkozik, nem csak a target-repo-t módosító capability-jobokra. Nincs kivétel
+  "ez csak audit/csak bookkeeping" alapon.
