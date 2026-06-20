@@ -16,9 +16,9 @@ agent:
 workplace:
   repos: []
   branch: "feature/session-ingress-envelope-contract-001"
-status: "running"
+status: "agent_done"
 error_message: ""
 timestamps:
   created: "2026-06-20T20:21:14Z"
   started: "2026-06-20T20:26:29Z"
-  completed: ""
+  completed: "2026-06-20T20:34:40Z"
