@@ -156,6 +156,28 @@ Minden capability-job output-jában (`jobs/<job-id>/output/`) szerepeljen:
 
 ---
 
+## Tervezési dokumentáció (`.cic-context/factory-docs/`)
+
+A `cic-mcp-*` család (session/shared/gateway) factory-job-okra bontásának normatív alapja itt él:
+
+```
+.cic-context/factory-docs/
+  README.md                      ← olvasási sorrend, szigor
+  architecture.md                ← komponens-térkép, Igen/Nem határok, trust modell
+  execution-phases.md            ← Phase 0–5 ütemezés
+  acceptance-contract.md         ← NORMATÍV — NO-GO szabályok, Universal Output Contract
+  job-slices.yaml                ← konkrét capability-job szeletek (phase, target_repo, gates)
+  claude-job-authoring-guide.md  ← input.md szerkesztési szabályok
+  initial-job-briefs.md          ← job-slices.yaml-hoz tartozó bővebb brief-ek (részleges lefedettség)
+.cic-context/corpus/normalized/  ← review artifactok (thead-review, factory-systems-review)
+```
+
+Egy job input-nak ebből MAX 1 fázist (`execution-phases.md`) + 1 job-szeletet (`job-slices.yaml`)
++ az `acceptance-contract.md` releváns részét kell tartalmaznia — lásd
+`claude-job-authoring-guide.md` "Context budget". Ne add oda a teljes csomagot egy agentnek.
+
+---
+
 ## Eszközök
 
 | Parancs | Mit csinál |
