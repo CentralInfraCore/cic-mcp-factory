@@ -48,16 +48,45 @@ orchestrátor/agent szétválasztás, csak a job-ok tartalma capability-specifik
 capability request                          (felismert hiány egy cic-mcp-* repóban)
   → input.md + meta.yaml                     (orchestrátor írja, capability: blokk kitöltve)
   → commit main → push
-run-job.sh: pending → running commit → workspace klón → feature branch
+run-job.sh / Agent tool: pending → running commit → workspace klón (factory + workplace.repos
+              ∪ capability.target_repo) → feature branch
 agent:      olvas jobs/<job-id>/ → tervez + implementál + tesztel → ír output/
               → AI review summary (mit változtat, miért, mit bizonyít, kockázat, merge-ready-e)
-              → commitol + pushol feature/<job-id>
-orchestrátor: review GitHubon → merge main (kizárólag emberi/orchestrátor jog)
+              → commitol + pushol feature/<job-id> (factory ÉS minden módosított target repo)
+            → status: agent_done (a Claude folyamat lefutott — exit code 0 ≠ kész capability-job)
+orchestrátor: /job-close — run-evidence.md ellenőrzés (push tényleg megtörtént-e), output review
+              → státusz agent_done → done CSAK review után
+              → review GitHubon → merge main (kizárólag emberi/orchestrátor jog)
               → registry/target repo frissítése a kész capability-vel
 ```
 
 A legfontosabb szabály (thead02): **az AI gyártja és validálja a capability-t, de a legitimáció
 (merge) mindig embernél/orchestrátornál marad.** A factory nem mergel önmagába.
+
+### Státusz lifecycle
+
+```
+pending → running → agent_done → done
+                 ↘ error (--resume-mal folytatható)
+```
+
+`agent_done` és `done` szándékosan külön állapot: a Claude folyamat sikeres lefutása (exit 0,
+vagy Agent tool sikeres visszatérése) nem bizonyítja hogy az output teljes, a target repo
+push megtörtént, és a "Kötelező PR-tartalom" minden pontja megvan. `done`-ra csak
+`/job-close` zár, evidence-ellenőrzés után — lásd `.claude/commands/job-close.md`.
+
+### Két indítási mód
+
+| | Mode A | Mode B |
+|---|---|---|
+| Hogyan | Agent tool, `.claude/commands/job-run.md` szerint | `tools/run-job.sh <job-id> [agent-id]` |
+| MCP | élő (session MCP öröklődik) | nincs (headless `claude --print`) |
+| Mikor | jobnak valós idejű KB-lekérdezés kell | batch/automatizált futtatás |
+| Evidence | manuális (job-close-nál) | automatikus (`run-evidence.md`) |
+
+Mindkét mód a `workplace.repos` ∪ `capability.target_repo` uniót klónozza (a `cic-mcp-factory`
+mindig külön, automatikusan) — a `target_repo` csak azt jelöli ki HOVA kerül az implementáció,
+nem azt hogy MIT kell klónozni.
 
 ### Git a bizalom forrása
 
@@ -78,8 +107,9 @@ jobs/
     meta.yaml                  ← lifecycle: pending | running | done | error (git-tracked)
     ref/                       ← referencia anyagok (opcionális, git-tracked)
     workspace/                 ← gitignored; agent klónjai élnek itt
-      cic-mcp-factory/         ← git clone + feature/<job-id> branch
-      <target cic-mcp-* repo>/ ← ha a job egy másik cic-mcp-* repóba is ír
+      cic-mcp-factory/         ← git clone + feature/<job-id> branch (mindig)
+        jobs/<job-id>/output/run-evidence.md  ← Mode B: mechanikus push/branch/HEAD bizonyíték
+      <repo>/                  ← workplace.repos ∪ capability.target_repo minden tagja
 ```
 
 ### meta.yaml kötelező mezők
@@ -101,8 +131,10 @@ agent:
   model: ""
 workplace:
   repos: []                   # pl. ["cic-mcp-workdir"] — workspace/<repo>/ alá klónozva
+                               # NE vedd fel "cic-mcp-factory"-t, az mindig automatikus
+                               # capability.target_repo automatikusan bekerül a klónozási unióba
   branch: ""                  # feature/<job-id>
-status: "pending"              # pending | running | done | error
+status: "pending"              # pending | running | agent_done | done | error
 error_message: ""
 timestamps:
   created: ""
@@ -129,13 +161,14 @@ Minden capability-job output-jában (`jobs/<job-id>/output/`) szerepeljen:
 | Parancs | Mit csinál |
 |---|---|
 | `./tools/validate-spec.sh <job-id>` | Mechanikus spec-ellenőrzés (K1/K3/K4/K7/K8/K9) — exit 1 = NO-GO |
-| `./tools/run-job.sh <job-id> [agent-id]` | Teljes lifecycle: validate-spec → klón (factory + `capability.target_repo`) → running→done → commit, push |
-| `./tools/update-index.sh` | `jobs/index.yaml` újragenerálása (`yaml.safe_load`, nem regex) |
+| `./tools/run-job.sh <job-id> [agent-id]` | Mode B teljes lifecycle: validate-spec → klón (factory + `workplace.repos` ∪ `capability.target_repo`) → running→**agent_done** → run-evidence.md → commit, push |
+| `./tools/update-index.sh` | `jobs/index.yaml` újragenerálása (`yaml.safe_load`, nem regex; üres lista `jobs: []`) |
 
 `run-job.sh` headless `claude --print`-et használ — ÉLŐ MCP hozzáférést igénylő joboknál (kb_status,
-search_nodes valós időben) az Agent tool-lal indítás kell, lásd `.claude/commands/job-run.md`.
+search_nodes valós időben) az Agent tool-lal indítás kell (Mode A), lásd `.claude/commands/job-run.md`.
 `run-job.sh` automatikusan futtatja a `validate-spec.sh`-t friss indításnál (nem `--resume`-nál) —
-NO-GO esetén nem indítja el az agentet.
+NO-GO esetén nem indítja el az agentet. **Soha nem zár `done`-ra** — csak `agent_done`-ra; a
+`done` átírás kizárólag `/job-close` review után, lásd "Státusz lifecycle".
 
 ---
 
@@ -161,6 +194,24 @@ Indítás: `CLAUDE_CONFIG_DIR=~/.claude-personal/agents/<id> claude --print "...
 
 A teljes ökoszisztéma-térkép a `cic-factory/docs/ecosystem-map.md`-ben él — onnan derive-old, ha
 egy job más CIC repóra is hivatkozik.
+
+---
+
+## Ismert korlátok / roadmap
+
+`validate-spec.sh` + `/job-validate` jelenleg **prompt-quality guardrail**, nem valódi capability
+contract validator — mintaillesztéssel ellenőrzi hogy a spec tartalmazza a kötelező elemeket
+(forrás, tiltott rövidítés, output formátum, claim-evidence tábla, reachability), de nem
+ellenőrzi a tényleges output/contract tartalmát szemantikailag. Ez jó első kapu, de nem
+helyettesíti a következő, még nem implementált rétegeket (nincs még konkrét capability-job,
+ami ellen ezeket meg lehetne tervezni):
+
+- `meta.yaml` schema validation (jelenleg csak konvenció, nincs gépi kikényszerítés)
+- `input.md` kötelező szekciók validation (jelenleg `validate-spec.sh` regex-mintákkal közelíti)
+- output artifact schema validation (a "Kötelező PR-tartalom" lista jelenleg csak emberi review-nál ellenőrzött)
+- target repo diff validation (mit szabad/nem szabad módosítania egy capability-jobnak a target repóban)
+- claim-evidence tábla parser (jelenleg csak vizuálisan ellenőrzött `/job-review`-nál)
+- PR readiness checker (gépi GO/NO-GO a teljes "Kötelező PR-tartalom" listára, nem csak a spec-re)
 
 ---
 
