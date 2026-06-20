@@ -16,9 +16,9 @@ agent:
 workplace:
   repos: []
   branch: "feature/session-postgres-storage-design-001"
-status: "running"
+status: "agent_done"
 error_message: ""
 timestamps:
   created: "2026-06-20T20:42:32Z"
   started: "2026-06-20T20:44:31Z"
-  completed: ""
+  completed: "2026-06-20T20:55:36Z"
