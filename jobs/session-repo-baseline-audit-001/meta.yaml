@@ -1,0 +1,24 @@
+schema_version: "1.0"
+job_id: "session-repo-baseline-audit-001"
+parent_job_id: ""
+level: "capability"
+capability:
+  id: "cic_mcp.session.baseline_audit"
+  target_repo: "cic-mcp-session"
+  change_type: "enhancement"
+  status_after_merge: "experimental"
+kb_focus: ["cic-mcp-session", "trust-domain", "session-scope", "mcp"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: []
+  branch: "feature/session-repo-baseline-audit-001"
+status: "running"
+error_message: ""
+timestamps:
+  created: "2026-06-20T13:00:11Z"
+  started: "2026-06-20T13:05:11Z"
+  completed: ""
