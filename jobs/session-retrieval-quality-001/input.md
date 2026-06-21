@@ -167,9 +167,10 @@ minden olyan helyet, ahol a migráció (ha készült) ezt módosította.
 ## Next Jobs
 ```
 
-Elfogadott `Status` értékek: `proven`, `partial`, `scaffold`, `missing`, `rejected`,
-`unknown`. `proven` KIZÁRÓLAG akkor használható, ha a tényleges SQL-függvény-hívás
-kimenete idézve van — valódi Postgres ellen.
+Elfogadott `Status` értékek: `proven`, `partial`, `missing`, `rejected`, `unknown`.
+`proven` KIZÁRÓLAG akkor használható, ha a tényleges SQL-függvény-hívás kimenete idézve
+van — valódi Postgres ellen. A függvény léte a `session-postgres-schema.sql` fájlban
+≠ működik — csak a tényleges futtatás bizonyít.
 
 ## Definition Of Done
 
