@@ -16,9 +16,9 @@ agent:
 workplace:
   repos: []
   branch: "feature/session-chunk-indexer-001"
-status: "running"
+status: "agent_done"
 error_message: ""
 timestamps:
   created: "2026-06-21T05:58:33Z"
   started: "2026-06-21T06:01:34Z"
-  completed: ""
+  completed: "2026-06-21T06:17:12Z"
