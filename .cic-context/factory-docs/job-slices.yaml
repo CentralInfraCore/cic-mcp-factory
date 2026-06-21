@@ -305,6 +305,33 @@ jobs:
       - "testing only that the function returns SOME rows without error, instead of asserting the semantically correct chunk ranks first on a real multi-topic fixture"
       - "assuming the HNSW index is used without checking EXPLAIN output"
 
+  - job_id: "session-hybrid-search-api-001"
+    phase: "3"
+    target_repo: "cic-mcp-session"
+    change_type: "new_capability"
+    status_after_merge: "experimental"
+    goal: "Add a session_api SQL function that combines the existing search_context() (FTS, 'simple' config) and search_context_vector() (cosine similarity) signals into one ranked result, using a documented, justified fusion method (e.g. reciprocal rank fusion), and prove on a real fixture that the combined function surfaces both a lexical-only-relevant chunk and a semantic-only-relevant chunk, where querying with either single method alone would surface only one of the two."
+    prerequisites:
+      - "session-retrieval-quality-001"
+      - "session-vector-search-api-001"
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#Schema szeparacio"
+      - ".cic-context/factory-docs/execution-phases.md#Phase 3"
+    output_files:
+      - "output/session-hybrid-search-api-report.md"
+    acceptance_gates:
+      - "An additive migration adds a session_api SQL function (e.g. search_context_hybrid) that accepts both a query text (for the FTS side, reusing search_context()'s plainto_tsquery('simple', ...) approach) and a caller-supplied query embedding (for the vector side, reusing search_context_vector()'s cosine-distance approach), and combines the two rankings via a documented, justified fusion method."
+      - "The fusion method choice (e.g. reciprocal rank fusion vs. normalized weighted sum) is justified given that ts_rank and cosine similarity are not on comparable scales — this tradeoff must be addressed explicitly, not glossed over."
+      - "A real fixture (built through the real insert_envelope -> turn_projector -> chunk_indexer chain) contains at least 3 chunks: one with an exact lexical match to the test query but low semantic relevance, one with high semantic relevance but no lexical overlap with the query, and one irrelevant control chunk."
+      - "It is proven, via actual function calls against this fixture, that: (a) search_context() alone finds the lexical-match chunk but not the semantic-only chunk for the test query; (b) search_context_vector() alone ranks the semantic-only chunk highly but not necessarily the lexical-match chunk; (c) the new hybrid function ranks BOTH the lexical-match and the semantic-only chunk above the irrelevant control chunk."
+    required_evidence:
+      - "Actual SQL function call output for all three functions (search_context, search_context_vector, search_context_hybrid) against the same fixture and query, quoted, showing the ranking difference that justifies the hybrid approach existing at all."
+      - "The fusion formula itself, quoted from the migration SQL, with the scale-mismatch justification quoted from the report."
+    forbidden_shortcuts:
+      - "combining ts_rank and cosine similarity via a naive unjustified weighted sum without addressing the scale-mismatch problem"
+      - "a fixture where the hybrid result would look the same as either single-method result — the fixture must be constructed so the two methods actually disagree, proving the fusion does real work"
+      - "reimplementing FTS or vector search logic instead of reusing search_context()'s and search_context_vector()'s existing query expressions"
+
   - job_id: "gateway-session-adapter-contract-001"
     phase: "2"
     target_repo: "cic-mcp-gateway"
