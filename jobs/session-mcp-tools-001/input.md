@@ -106,6 +106,20 @@ A riportban EXPLICIT mondd ki: ez a job NEM köti be az új szervert a
 `.mcp.json.tpl`-be vagy bármilyen éles Claude Code konfigba — az élesítés/regisztráció
 külön, jövőbeli döntés.
 
+### 6. Reachability ellenőrzés (kötelező)
+
+```bash
+grep -rn "search_session_context" --include="*.py" . | grep -v "test_" | grep -v "/tests/"
+```
+
+`file:line` hivatkozással minden találatra. Dokumentáld explicit: a tool LÉTEZÉSE a
+fájlban és a sikeres `mcp.call_tool()` hívás KÉT KÜLÖNÁLLÓ állítás a "VALAMELYIK
+orchestrátor/gateway/kliens TÉNYLEG ezt a szervert indítja production-ben" állítástól —
+az utóbbi `missing`, mert a `.mcp.json.tpl`-be nincs bekötve (lásd 5. pont). A hívó
+fájl és sor pontos hivatkozása (file:line formátumban) kötelező minden találatra. A
+tool létezése a fájlban ≠ működik MCP-n keresztül — csak a tényleges `mcp.call_tool()`
+hívás bizonyít.
+
 ## Nem cél
 
 - a `.mcp.json.tpl` bővítése, vagy bármilyen éles MCP-kliens-konfig módosítása
