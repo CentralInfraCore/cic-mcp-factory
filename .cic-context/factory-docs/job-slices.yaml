@@ -412,6 +412,36 @@ jobs:
       - "testing only that the function executes without error, instead of proving the ref_kind filter and the session scoping both actually work via a real cross-session fixture"
       - "the MCP server or any other code querying session_core.source_refs directly instead of through this session_api function"
 
+  - job_id: "session-mcp-tools-001"
+    phase: "3"
+    target_repo: "cic-mcp-session"
+    change_type: "new_capability"
+    status_after_merge: "experimental"
+    goal: "Create the FIRST session-specific MCP server module (separate from the existing mcp-server/server.py, which is the unrelated cic-graph KB server vendored into this repo) exposing exactly ONE session_api.* function — search_context_hybrid — as a real MCP tool, closing the reachability gap every prior session_api job has flagged as missing: 'a stable SQL function exists, but nothing exposes it to an MCP client.'"
+    prerequisites:
+      - "session-hybrid-search-api-001"
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#Schema szeparacio"
+      - ".cic-context/factory-docs/execution-phases.md#Phase 3"
+    output_files:
+      - "output/session-mcp-tools-report.md"
+    acceptance_gates:
+      - "A new MCP server module (e.g. mcp-server/session_server.py) is created using the same FastMCP pattern as the existing mcp-server/server.py, with its own server name (NOT 'cic-graph') and its own Postgres connection sourced via the existing SessionStoreConfig.from_env() — no hardcoded connection string."
+      - "Exactly one MCP tool (e.g. search_session_context) wraps session_api.search_context_hybrid() — reusing the existing SQL function via psycopg, not reimplementing RRF or any ranking logic in Python."
+      - "Reachability is proven at TWO levels, not just one: (a) calling the underlying decorated Python function directly against a real Postgres fixture, AND (b) dispatching through the actual FastMCP tool-call path (mcp.list_tools() shows the tool registered; mcp.call_tool() or equivalent actually invokes it) — proving the MCP boundary itself works, not just the wrapped SQL call."
+      - "The 3-chunk RRF fixture pattern from session-hybrid-search-api-001 (lexical-only match, semantic-only match, irrelevant control) is reused (not reinvented) to prove the MCP tool returns the same fused ranking the underlying SQL function already proved."
+      - "This job does NOT wire the new server into .mcp.json.tpl or any live Claude Code config — that is a deployment/registration decision out of scope, explicitly stated as such in the report, mirroring the 'documented vs deployed' distinction from session-worker-scheduler-001."
+    required_evidence:
+      - "The new tool's file:line location, quoted, and the SQL function call site inside it, quoted."
+      - "Actual output of mcp.list_tools() showing the new tool registered, quoted."
+      - "Actual output of calling the tool through the real MCP dispatch path (not just the bare function), quoted, for the 3-chunk fixture, showing the same fused ranking as session-hybrid-search-api-001's report."
+      - "Confirmation that the existing test suite still passes."
+    forbidden_shortcuts:
+      - "testing only the bare Python function and calling that 'the MCP tool works' — the actual FastMCP registration/dispatch path must be exercised at least once"
+      - "reimplementing search_context_hybrid's RRF logic in Python instead of calling the existing SQL function"
+      - "modifying the existing mcp-server/server.py (the cic-graph KB server) — it is unrelated and out of scope"
+      - "claiming this is wired into any live MCP client config when it has not been"
+
   - job_id: "gateway-session-adapter-contract-001"
     phase: "2"
     target_repo: "cic-mcp-gateway"
