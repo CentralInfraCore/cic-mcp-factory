@@ -219,6 +219,35 @@ jobs:
       - "worker calls external LLM/HTTP"
       - "mocked outbox/session_raw rows as proof of working projection"
 
+  - job_id: "session-chunk-indexer-001"
+    phase: "3"
+    target_repo: "cic-mcp-session"
+    change_type: "new_capability"
+    status_after_merge: "experimental"
+    goal: "Implement a worker that chunks session_core.turns.content into session_core.chunks, populates session_idx.chunk_fts (tsvector) and session_idx.chunk_embeddings (local embedding model, pinning the dimension the schema's own comment deferred to this job), via a new session_jobs.outbox job_type ('index_turn') enqueued by an additive trigger on session_core.turns."
+    prerequisites:
+      - "session-turn-projector-001"
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#Schema szeparacio"
+      - ".cic-context/factory-docs/execution-phases.md#Phase 3"
+    output_files:
+      - "output/session-chunk-indexer-report.md"
+    acceptance_gates:
+      - "An additive, idempotent DDL migration adds a trigger on session_core.turns that enqueues a session_jobs.outbox row (job_type='index_turn'), applied on top of the existing session-postgres-schema.sql against a real Postgres instance without error."
+      - "A deterministic, documented chunking strategy (fixed-size or regex-boundary splitting, not an AI/LLM decision) splits turns.content into 1+ session_core.chunks rows."
+      - "session_idx.chunk_fts.tsv is populated per chunk via to_tsvector."
+      - "session_idx.chunk_embeddings is populated using a LOCAL embedding model (e.g. sentence-transformers, already in requirements.in) — not a call to an external LLM/HTTP embedding API; the chosen model name and VECTOR(N) dimension are documented, and the schema's VECTOR(1536) placeholder is adjusted via migration if the real model's dimension differs, with justification."
+      - "The index_turn outbox row resolves to done/failed/dead_letter using the same per-row-transaction pattern as session-turn-projector-001's turn_projector."
+      - "Tests run end-to-end against a real Postgres instance: turn insert -> trigger enqueues index_turn job -> worker run -> chunks/chunk_fts/chunk_embeddings rows verified -> outbox marked done."
+    required_evidence:
+      - "End-to-end test output: turn insert, outbox row creation, worker run, chunks/chunk_fts/chunk_embeddings rows, outbox status — quoted, not paraphrased."
+      - "The chosen embedding model name, its real output dimension, and the justification for it (or for adjusting the schema's VECTOR(1536) placeholder) — quoted."
+      - "The migration SQL diff (new trigger, and any column type adjustment) — quoted."
+    forbidden_shortcuts:
+      - "embedding generation via an external LLM/HTTP API (OpenAI, Anthropic, etc.) instead of a local model"
+      - "AI/LLM-based decision about chunk boundaries instead of deterministic fixed-size/regex splitting"
+      - "mocked chunk_fts/chunk_embeddings rows as proof of a working indexer"
+
   - job_id: "gateway-session-adapter-contract-001"
     phase: "2"
     target_repo: "cic-mcp-gateway"
