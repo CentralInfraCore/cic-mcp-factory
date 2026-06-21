@@ -193,6 +193,32 @@ jobs:
       - "mocked database connection as proof of a working write-path"
       - "skipping the idempotency test because 'the UNIQUE constraint handles it'"
 
+  - job_id: "session-turn-projector-001"
+    phase: "3"
+    target_repo: "cic-mcp-session"
+    change_type: "new_capability"
+    status_after_merge: "experimental"
+    goal: "Implement a worker that consumes session_jobs.outbox (project_envelope jobs), projects session_raw.envelopes rows into session_core.sessions/turns, and marks outbox jobs done/failed/dead_letter."
+    prerequisites:
+      - "session-raw-event-store-001"
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#Schema szeparacio"
+      - ".cic-context/factory-docs/execution-phases.md#Phase 3"
+    output_files:
+      - "output/session-turn-projector-report.md"
+    acceptance_gates:
+      - "Worker reads pending session_jobs.outbox rows (job_type=project_envelope), joins to session_raw.envelopes by source_id."
+      - "Worker upserts session_core.sessions (keyed by provider+provider_session_id) and inserts a session_core.turns row per envelope."
+      - "Worker marks the outbox row done on success, or failed/dead_letter with attempts incremented on error — never leaves a processed row silently pending forever."
+      - "Worker does not call any external LLM/HTTP service."
+      - "Tests run end-to-end against a real Postgres instance: insert_envelope() -> trigger creates outbox row -> worker run -> session_core rows verified -> outbox marked done."
+    required_evidence:
+      - "End-to-end test output: envelope insert, outbox row creation, worker run, session_core.sessions/turns rows, outbox status — quoted, not paraphrased."
+      - "Error-path test: a malformed/missing envelope reference results in failed/dead_letter, not a crash or a silently-stuck pending row."
+    forbidden_shortcuts:
+      - "worker calls external LLM/HTTP"
+      - "mocked outbox/session_raw rows as proof of working projection"
+
   - job_id: "gateway-session-adapter-contract-001"
     phase: "2"
     target_repo: "cic-mcp-gateway"
