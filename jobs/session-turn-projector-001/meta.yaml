@@ -16,9 +16,9 @@ agent:
 workplace:
   repos: []
   branch: "feature/session-turn-projector-001"
-status: "pending"
+status: "running"
 error_message: ""
 timestamps:
   created: "2026-06-21T05:34:01Z"
-  started: ""
+  started: "2026-06-21T05:37:15Z"
   completed: ""
