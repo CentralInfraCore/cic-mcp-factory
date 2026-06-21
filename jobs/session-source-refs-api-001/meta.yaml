@@ -1,0 +1,24 @@
+schema_version: "1.0"
+job_id: "session-source-refs-api-001"
+parent_job_id: "session-source-refs-extractor-001"
+level: "capability"
+capability:
+  id: "cic_mcp.session.source_refs_api"
+  target_repo: "cic-mcp-session"
+  change_type: "new_capability"
+  status_after_merge: "experimental"
+kb_focus: ["cic-mcp-session", "session-api", "source-refs", "provenance"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: []
+  branch: "feature/session-source-refs-api-001"
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-06-21T17:44:50Z"
+  started: ""
+  completed: ""
