@@ -16,9 +16,9 @@ agent:
 workplace:
   repos: []
   branch: "feature/session-worker-scheduler-001"
-status: "pending"
+status: "running"
 error_message: ""
 timestamps:
   created: "2026-06-21T12:51:28Z"
-  started: ""
+  started: "2026-06-21T12:53:31Z"
   completed: ""
