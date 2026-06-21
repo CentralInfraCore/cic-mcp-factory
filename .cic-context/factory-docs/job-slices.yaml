@@ -359,6 +359,33 @@ jobs:
       - "claiming the unit file is 'deployed' or 'running in production' when no live production Postgres exists for this repo"
       - "reimplementing turn_projector/chunk_indexer batch logic inside the loop instead of calling the existing functions"
 
+  - job_id: "session-source-refs-extractor-001"
+    phase: "3"
+    target_repo: "cic-mcp-session"
+    change_type: "enhancement"
+    status_after_merge: "experimental"
+    goal: "Populate session_core.source_refs (the last unfilled session_core table) by extracting deterministic provenance references (tool_call name, file path, URL) from each chunk's source envelope payload/text during chunk_indexer's existing index_turn processing — not via a new outbox job_type, since source_refs.chunk_id requires the chunk to already exist in the same transaction."
+    prerequisites:
+      - "session-chunk-indexer-001"
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#Schema szeparacio"
+      - ".cic-context/factory-docs/execution-phases.md#Phase 3"
+    output_files:
+      - "output/session-source-refs-extractor-report.md"
+    acceptance_gates:
+      - "A deterministic (non-AI/LLM) extraction function derives 0+ session_core.source_refs rows per chunk from the chunk's source envelope payload and/or extracted text: ref_kind='tool_call' (from a known tool-event payload shape), ref_kind='file' (from a known file-path-bearing payload key), ref_kind='url' (via a fixed regex over the chunk text) — the exact key/pattern matching rules are documented and justified."
+      - "The extraction runs inside chunk_indexer's existing index_turn per-row transaction (the same transaction that creates the chunk), NOT via a new outbox job_type — reusing the established _index_one_job structure, not reimplementing the outbox-consumption pattern."
+      - "A real fixture (built through the real insert_envelope -> turn_projector -> chunk_indexer chain) includes at least one tool-call-shaped envelope, one file-path-bearing envelope, one URL-containing text chunk, and one chunk with nothing extractable — and the resulting session_core.source_refs rows for each are verified by actual query, including the zero-rows case producing no error."
+      - "content_hash is populated for each source_ref row via a documented, deterministic hash function (e.g. sha256 of ref_value), not left null without justification."
+    required_evidence:
+      - "Actual SQL query output showing session_core.source_refs rows for each of the 4 fixture cases (tool_call, file, url, none), quoted, not paraphrased."
+      - "The extraction function's file:line location and the exact key/pattern rules it matches, quoted."
+      - "Confirmation that the existing chunk_indexer/turn_projector/worker_loop test suite still passes unmodified after this change (no regression to the outbox-consumption pattern)."
+    forbidden_shortcuts:
+      - "AI/LLM-based extraction of references instead of deterministic key/regex matching"
+      - "introducing a new outbox job_type for this when the existing index_turn transaction already has the chunk_id available"
+      - "leaving content_hash null/empty without an explicit, documented reason"
+
   - job_id: "gateway-session-adapter-contract-001"
     phase: "2"
     target_repo: "cic-mcp-gateway"
