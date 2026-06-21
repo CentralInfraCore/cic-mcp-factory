@@ -16,9 +16,9 @@ agent:
 workplace:
   repos: []
   branch: "feature/session-retrieval-quality-001"
-status: "running"
+status: "agent_done"
 error_message: ""
 timestamps:
   created: "2026-06-21T06:26:23Z"
   started: "2026-06-21T06:29:16Z"
-  completed: ""
+  completed: "2026-06-21T06:51:56Z"
