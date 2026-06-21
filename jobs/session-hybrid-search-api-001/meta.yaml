@@ -16,9 +16,9 @@ agent:
 workplace:
   repos: []
   branch: "feature/session-hybrid-search-api-001"
-status: "pending"
+status: "running"
 error_message: ""
 timestamps:
   created: "2026-06-21T10:44:57Z"
-  started: ""
+  started: "2026-06-21T10:47:07Z"
   completed: ""
