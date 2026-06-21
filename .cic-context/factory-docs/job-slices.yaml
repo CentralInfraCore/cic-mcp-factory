@@ -248,6 +248,35 @@ jobs:
       - "AI/LLM-based decision about chunk boundaries instead of deterministic fixed-size/regex splitting"
       - "mocked chunk_fts/chunk_embeddings rows as proof of a working indexer"
 
+  - job_id: "session-retrieval-quality-001"
+    phase: "3"
+    target_repo: "cic-mcp-session"
+    change_type: "enhancement"
+    status_after_merge: "experimental"
+    goal: "Validate the session_api.* read-path SQL functions (search_context, get_timeline, get_context_pack, session_status) against a realistic multi-turn, bilingual (Hungarian/English) session fixture built through the full real chain (insert_envelope -> turn_projector -> chunk_indexer), and fix any integration bugs found between the read-path and the two existing outbox workers."
+    prerequisites:
+      - "session-turn-projector-001"
+      - "session-chunk-indexer-001"
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#Schema szeparacio"
+      - ".cic-context/factory-docs/execution-phases.md#Phase 3"
+    output_files:
+      - "output/session-retrieval-quality-report.md"
+    acceptance_gates:
+      - "A realistic test fixture (several envelopes, mixed Hungarian/English content) is built through the real chain (insert_envelope -> turn_projector.run_projection_batch -> chunk_indexer.run_indexing_batch), not via direct INSERTs that bypass the workers."
+      - "session_api.search_context() is tested against this fixture with known query terms; the to_tsvector('simple', ...) (chunk_indexer) vs plainto_tsquery('english', ...) (search_context) configuration mismatch is explicitly tested with a case where English stemming would matter (e.g. content contains an inflected form, query uses the base form), and the result (match or miss) is documented, not assumed — if it causes real, undesirable misses, an additive migration fixing the inconsistency is implemented and justified."
+      - "session_api.get_timeline() and session_api.get_context_pack() are tested against the same fixture with real multi-turn data and asserted ordering."
+      - "session_api.session_status() is tested against the same fixture; the pending_jobs subquery's assumption that every session_jobs.outbox payload contains an 'event_id' key is explicitly checked against BOTH outbox job_types currently in use (project_envelope has 'event_id', index_turn does not, per the existing trigger definitions) — if this causes an undercount, it is documented as a Risk or fixed via an additive migration, not silently ignored."
+      - "All claims about query results are backed by actual function-call output against a real Postgres instance, not by reasoning about the SQL alone."
+    required_evidence:
+      - "Actual SQL function call output (e.g. via psql or psycopg) for each of the 4 session_api functions against the real fixture — quoted, not paraphrased."
+      - "The to_tsvector/tsquery language-config test result, quoted, with an explicit statement of whether it matches expectations."
+      - "The session_status() pending_jobs behavior across both job_types, quoted, with an explicit statement of whether it undercounts."
+    forbidden_shortcuts:
+      - "testing session_api functions only against hand-crafted rows inserted directly into session_core/session_idx tables, bypassing the real envelope_writer/turn_projector/chunk_indexer chain"
+      - "assuming the to_tsvector('simple')/plainto_tsquery('english') combination works without an actual query-and-assert test against a stemming-sensitive case"
+      - "assuming session_status()'s pending_jobs count is correct without testing it against an index_turn outbox row"
+
   - job_id: "gateway-session-adapter-contract-001"
     phase: "2"
     target_repo: "cic-mcp-gateway"
