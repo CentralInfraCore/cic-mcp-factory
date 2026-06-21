@@ -277,6 +277,34 @@ jobs:
       - "assuming the to_tsvector('simple')/plainto_tsquery('english') combination works without an actual query-and-assert test against a stemming-sensitive case"
       - "assuming session_status()'s pending_jobs count is correct without testing it against an index_turn outbox row"
 
+  - job_id: "session-vector-search-api-001"
+    phase: "3"
+    target_repo: "cic-mcp-session"
+    change_type: "new_capability"
+    status_after_merge: "experimental"
+    goal: "Add a session_api SQL function that queries session_idx.chunk_embeddings via pgvector cosine similarity (the HNSW index already exists but is never queried by any session_api function), and a Python helper that embeds a query string with the same local model chunk_indexer uses, so the embeddings session-chunk-indexer-001 writes are actually read by something for the first time."
+    prerequisites:
+      - "session-chunk-indexer-001"
+      - "session-retrieval-quality-001"
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#Schema szeparacio"
+      - ".cic-context/factory-docs/execution-phases.md#Phase 3"
+    output_files:
+      - "output/session-vector-search-api-report.md"
+    acceptance_gates:
+      - "An additive migration adds a session_api SQL function (e.g. search_context_vector) that orders session_core.chunks by cosine distance to a caller-supplied query embedding (VECTOR(384), matching session-chunk-indexer-001's corrected dimension), scoped to a session_id, using the existing idx_session_idx_chunk_embeddings_hnsw index."
+      - "A Python helper embeds a query string with the SAME local model chunk_indexer.py uses (reused, not reimplemented) — not an external LLM/HTTP embedding API — to produce the vector passed into the new SQL function."
+      - "A real, multi-topic fixture (at least 2 turns about clearly distinct topics, built through the real insert_envelope -> turn_projector -> chunk_indexer chain) is used to prove the function returns the semantically closer chunk first for a query about one of the two topics — not just that the function executes without error."
+      - "The new function's result ordering is verified to actually use the HNSW index (e.g. EXPLAIN output showing an index scan, not a sequential scan with a manual sort), or, if the planner chooses a sequential scan at this fixture's tiny row count, that is explicitly documented as expected-at-small-scale, not silently accepted as 'index works'."
+    required_evidence:
+      - "Actual SQL function call output for at least 2 distinct queries against a real multi-topic fixture, quoted, showing the semantically relevant chunk ranked first."
+      - "EXPLAIN (or equivalent) output for the new function's query, quoted, with an explicit statement of whether the HNSW index was used."
+      - "The query-embedding helper's actual output dimension, queried, matching session_idx.chunk_embeddings.embedding's declared VECTOR(384)."
+    forbidden_shortcuts:
+      - "query embedding generated via an external LLM/HTTP API instead of the existing local model"
+      - "testing only that the function returns SOME rows without error, instead of asserting the semantically correct chunk ranks first on a real multi-topic fixture"
+      - "assuming the HNSW index is used without checking EXPLAIN output"
+
   - job_id: "gateway-session-adapter-contract-001"
     phase: "2"
     target_repo: "cic-mcp-gateway"
