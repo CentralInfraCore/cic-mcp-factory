@@ -332,6 +332,33 @@ jobs:
       - "a fixture where the hybrid result would look the same as either single-method result — the fixture must be constructed so the two methods actually disagree, proving the fusion does real work"
       - "reimplementing FTS or vector search logic instead of reusing search_context()'s and search_context_vector()'s existing query expressions"
 
+  - job_id: "session-worker-scheduler-001"
+    phase: "3"
+    target_repo: "cic-mcp-session"
+    change_type: "new_capability"
+    status_after_merge: "experimental"
+    goal: "Add a bounded, testable polling loop that repeatedly invokes turn_projector.run_projection_batch() and chunk_indexer.run_indexing_batch() on an interval, plus a documented systemd timer/service unit pair (or cron line) as the production deployment mechanism, closing the 'scaffold' reachability gap both workers have carried since their own jobs (no code outside their own CLI/tests has ever called them)."
+    prerequisites:
+      - "session-turn-projector-001"
+      - "session-chunk-indexer-001"
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#Schema szeparacio"
+      - ".cic-context/factory-docs/execution-phases.md#Phase 3"
+    output_files:
+      - "output/session-worker-scheduler-report.md"
+    acceptance_gates:
+      - "A polling-loop entrypoint (e.g. session_store/worker_loop.py) calls the EXISTING turn_projector.run_projection_batch() and chunk_indexer.run_indexing_batch() each iteration — not reimplemented — and supports a bounded iteration count (e.g. --max-iterations) so it is testable without an infinite loop in CI."
+      - "A real, multi-envelope backlog (built through the real insert_envelope chain, NOT manually invoking the workers first) is drained across MORE THAN ONE polling iteration by the loop alone, proven by querying session_core.turns/chunks and session_idx.chunk_embeddings after the loop finishes with no manual worker invocation in between."
+      - "A documented systemd timer+service unit pair (or cron line) is provided as the intended production deployment mechanism for the loop, with an EXPLICIT, honest statement that this repo has no live production Postgres instance yet, so the unit file is a documented deployment artifact, not a claim that it is actually running anywhere — 'documented' and 'deployed' must not be conflated."
+      - "The loop handles an empty backlog (nothing pending) without erroring across iterations."
+    required_evidence:
+      - "Actual test output: N envelopes inserted, loop run with --max-iterations > 1, all N envelopes' turns/chunks/embeddings present afterward, with the per-iteration progress (e.g. how many jobs were drained on each iteration) quoted, not paraphrased — proving the LOOP drained the backlog over time, not a single batch call."
+      - "The systemd/cron unit file content, quoted, with the explicit non-deployment disclaimer quoted from the report."
+    forbidden_shortcuts:
+      - "testing only a single iteration that processes everything at once — this does not prove the looping/scheduling aspect, only that the underlying batch functions work (already proven by prior jobs)"
+      - "claiming the unit file is 'deployed' or 'running in production' when no live production Postgres exists for this repo"
+      - "reimplementing turn_projector/chunk_indexer batch logic inside the loop instead of calling the existing functions"
+
   - job_id: "gateway-session-adapter-contract-001"
     phase: "2"
     target_repo: "cic-mcp-gateway"
