@@ -148,8 +148,13 @@ Pytest tesztek a VALÓDI Postgres konténer ellen (nem mock-olva):
 grep -rn "<worker_function_name>" --include="*.py" . | grep -v "test_" | grep -v "/tests/"
 ```
 
-Ugyanúgy kezeld a `scaffold`/`proven` megkülönböztetést, mint az előző két jobban: a CLI
-létezése/futtathatósága elkülönítve a "valaki tényleg rendszeresen futtatja" állítástól.
+Minden találatnál add meg a hívó fájl és sor pontos hivatkozását (`file:line` formátumban,
+pl. `session_store/chunk_indexer.py:142`) — ha 0 KÜLSŐ hívó van (csak a saját CLI/teszt),
+ezt explicit `deadcode`-ként/`scaffold`-ként dokumentáld, NE csak azt írd hogy "a függvény
+létezik". Ugyanúgy kezeld a `scaffold`/`proven` megkülönböztetést, mint az előző két
+jobban: a CLI létezése/futtathatósága elkülönítve a "valaki tényleg rendszeresen futtatja"
+állítástól (a production hívási lánc állapotát is `file:line` hivatkozással dokumentáld, ha
+van).
 
 ## Nem cél
 
