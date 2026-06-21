@@ -386,6 +386,32 @@ jobs:
       - "introducing a new outbox job_type for this when the existing index_turn transaction already has the chunk_id available"
       - "leaving content_hash null/empty without an explicit, documented reason"
 
+  - job_id: "session-source-refs-api-001"
+    phase: "3"
+    target_repo: "cic-mcp-session"
+    change_type: "new_capability"
+    status_after_merge: "experimental"
+    goal: "Add a session_api SQL function that reads session_core.source_refs (populated by session-source-refs-extractor-001), scoped to a session_id and optionally filtered by ref_kind, closing the last unread session_core table — the MCP server still must never query session_core/session_idx tables directly, only stable session_api functions (per architecture.md)."
+    prerequisites:
+      - "session-source-refs-extractor-001"
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#Schema szeparacio"
+      - ".cic-context/factory-docs/execution-phases.md#Phase 3"
+    output_files:
+      - "output/session-source-refs-api-report.md"
+    acceptance_gates:
+      - "An additive migration adds a session_api SQL function (e.g. get_source_refs) that returns session_core.source_refs rows joined through session_core.chunks, scoped to p_session_id, with an optional p_ref_kind filter (NULL means all kinds)."
+      - "A real fixture (built through the real insert_envelope -> turn_projector -> chunk_indexer chain, reusing session-source-refs-extractor-001's tool_call/file/url cases) proves: (a) all 3 ref_kind rows for one session are returned when p_ref_kind is NULL; (b) only the matching rows are returned when p_ref_kind is set to one specific kind; (c) a source_ref belonging to a DIFFERENT session is correctly excluded by the session_id scoping."
+      - "The function follows the same STABLE SQL function convention as the existing session_api.* functions (search_context, get_timeline, get_context_pack, session_status) — same style, same file location pattern."
+    required_evidence:
+      - "Actual SQL function call output for the NULL-filter case (all kinds), a specific-kind-filter case, and the cross-session-exclusion case, quoted, not paraphrased."
+      - "The new function's file:line location, quoted."
+      - "Confirmation that the existing test suite (chunk_indexer, turn_projector, worker_loop, session_api, vector_search, hybrid_search) still passes after this additive migration."
+    forbidden_shortcuts:
+      - "a function that returns source_refs without session_id scoping (would leak cross-session provenance data)"
+      - "testing only that the function executes without error, instead of proving the ref_kind filter and the session scoping both actually work via a real cross-session fixture"
+      - "the MCP server or any other code querying session_core.source_refs directly instead of through this session_api function"
+
   - job_id: "gateway-session-adapter-contract-001"
     phase: "2"
     target_repo: "cic-mcp-gateway"
