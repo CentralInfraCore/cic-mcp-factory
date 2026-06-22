@@ -500,6 +500,37 @@ jobs:
       - "proving only the in-process Python call again (already proven by prior jobs) instead of the actual subprocess + stdio handshake this job is specifically about"
       - "modifying the existing cic-graph entry or mcp-server/server.py"
 
+  - job_id: "session-hook-collector-001"
+    phase: "3"
+    target_repo: "cic-mcp-session"
+    change_type: "new_capability"
+    status_after_merge: "experimental"
+    goal: "Write the FIRST real producer of SessionIngressEnvelope rows: a Claude Code hook script that reads the hook's stdin JSON, maps it to a SessionIngressEnvelope, and calls the existing session_store.envelope_writer.insert_envelope() — closing the gap every prior job has flagged, that all envelopes ingested so far were constructed test fixtures, never a real Claude Code session event."
+    prerequisites:
+      - "session-raw-event-store-001"
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#Fo hatarok"
+      - ".cic-context/factory-docs/execution-phases.md#Phase 3"
+    output_files:
+      - "output/session-hook-collector-report.md"
+    acceptance_gates:
+      - "A new script (e.g. hooks/log-event.py, matching the 'log-event.py' collector name already referenced in every existing test fixture's source.collector field) reads Claude Code's documented hook stdin JSON contract and maps it deterministically into a SessionIngressEnvelope dict, then calls the EXISTING session_store.envelope_writer.insert_envelope() — no new write-path logic, no schema reinterpretation, reusing the existing function as-is."
+      - "The script's exit behavior NEVER blocks or denies the actual Claude Code tool call/session it is hooked into, even when the database is unreachable or insert_envelope() raises — DB/network failures must be caught and logged (e.g. to stderr or a local file), with the script still exiting in a way that does not block Claude Code's own operation. This is the single most important constraint: a broken DB must never break the user's actual Claude Code session."
+      - "A deterministic (not random per invocation) idempotency_key derivation strategy is proposed and justified — Claude Code hook JSON does not necessarily provide a single unique event identifier, so the exact fields used to derive it (e.g. session_id + hook_event_name + a stable per-event field) must be documented and justified in 'Decisions Proposed', with the trade-off of any false-duplicate or false-unique risk stated explicitly."
+      - "An example (not installed/activated) .claude/settings.json hook configuration snippet is provided in the report showing how a real Claude Code session would wire PreToolUse/PostToolUse/UserPromptSubmit/Stop events to this script — documented, not activated, mirroring the 'documented vs deployed' distinction from session-worker-scheduler-001 and session-mcp-config-wiring-001."
+      - "The script is proven by feeding it CONSTRUCTED sample hook JSON payloads (matching the documented Claude Code hook contract for at least PreToolUse/PostToolUse and UserPromptSubmit/Stop shapes) via stdin against a real Postgres instance, confirming a correctly-shaped session_raw.envelopes row results for each — NOT a real live Claude Code session, which this job cannot invoke. This limitation must be stated honestly, not glossed over."
+    required_evidence:
+      - "The hook JSON field-to-envelope-field mapping table, quoted, with a citation/reference for where the hook JSON contract was sourced from."
+      - "Actual session_raw.envelopes row content (queried via SQL) for each constructed sample hook payload, quoted."
+      - "A demonstration that a simulated DB-unreachable condition does not change the script's non-blocking exit behavior, quoted (e.g. exit code captured before/after stopping the test Postgres container)."
+      - "Confirmation that the existing test suite still passes."
+    forbidden_shortcuts:
+      - "any code path where a DB/network failure could block, deny, or visibly error out of the actual Claude Code tool call/session — this is non-negotiable, the same severity class as the no-secrets-in-tpl gate from session-mcp-config-wiring-001"
+      - "using a random/non-deterministic idempotency_key (defeats the existing ON CONFLICT DO NOTHING dedup mechanism insert_envelope() already relies on)"
+      - "reimplementing or modifying insert_envelope()/validate_envelope() instead of calling them as-is"
+      - "claiming this was tested against a real, live Claude Code session when it was only tested with constructed sample payloads"
+      - "actually installing/activating the hook in any live .claude/settings.json as part of this job"
+
   - job_id: "gateway-session-adapter-contract-001"
     phase: "2"
     target_repo: "cic-mcp-gateway"
