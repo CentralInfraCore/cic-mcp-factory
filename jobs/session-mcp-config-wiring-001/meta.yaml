@@ -16,9 +16,9 @@ agent:
 workplace:
   repos: []
   branch: "feature/session-mcp-config-wiring-001"
-status: "agent_done"
+status: "done"
 error_message: ""
 timestamps:
   created: "2026-06-22T05:00:00Z"
   started: "2026-06-22T05:01:44Z"
-  completed: "2026-06-22T05:53:10Z"
+  completed: "2026-06-22T05:55:00Z"
