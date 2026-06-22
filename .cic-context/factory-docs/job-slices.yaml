@@ -585,6 +585,33 @@ jobs:
       - "rewriting status sections from general knowledge of what 'should' be true instead of citing the specific job report/file that proves each implemented claim"
       - "touching any functional code path as a side effect of a docs/comments-only fix"
 
+  - job_id: "gateway-source-registry-contract-001"
+    phase: "1B"
+    target_repo: "cic-mcp-gateway"
+    change_type: "new_capability"
+    status_after_merge: "experimental"
+    goal: "Formalize the source registry metadata schema (owns_raw_storage, returns_trust_envelope, query_capabilities, canonical) for the four source_id values already enum-constrained in GatewayContextEnvelope.sources_used[] (cic-mcp-session, cic-mcp-shared, cic-mcp-knowledge, cic-mcp-workdir), building on gateway-baseline.md's 'Source Registry - Initial Boundary' table, and resolve the open risk about whether cic-mcp-workdir is its own source-domain or only reachable through cic-factory."
+    prerequisites:
+      - "gateway-context-envelope-contract-001"
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#cic-mcp-gateway"
+      - ".cic-context/factory-docs/execution-phases.md#Phase 1B"
+    output_files:
+      - "output/gateway-source-registry-contract.md"
+      - "output/gateway-source-registry.schema.yaml"
+    acceptance_gates:
+      - "Schema's source_id enum is identical, value-for-value, to GatewayContextEnvelope.sources_used[].source_id's enum (cic-mcp-session, cic-mcp-shared, cic-mcp-knowledge, cic-mcp-workdir) — any mismatch is a contract break and must be called out, not silently diverged from."
+      - "Schema's trust_domain enum is identical, value-for-value, to GatewayContextEnvelope.sources_used[].trust_domain's enum (session_local, session_derived, shared_mixed, canonical, workdir_local)."
+      - "Report explicitly resolves the cic-mcp-workdir vs cic-factory source-domain question flagged as an open risk in gateway-baseline.md, with a stated decision and rationale (not left open)."
+      - "Report includes at least 4 valid registry entries (one per known source_id) and at least 2 invalid entries with stated reasons."
+    required_evidence:
+      - "Side-by-side enum comparison against the actual gateway-context-envelope.schema.yaml file content (quoted), not from memory."
+      - "The cic-mcp-workdir resolution decision, with the specific architecture.md/CLAUDE.md line(s) it is based on, quoted."
+    forbidden_shortcuts:
+      - "diverging source_id or trust_domain enum values from GatewayContextEnvelope without an explicit, justified migration note for both schemas"
+      - "leaving the cic-mcp-workdir vs cic-factory question open/unresolved"
+      - "implementing actual registry loading/validation code (schema + report only, same as gateway-context-envelope-contract-001)"
+
   - job_id: "gateway-session-adapter-contract-001"
     phase: "2"
     target_repo: "cic-mcp-gateway"

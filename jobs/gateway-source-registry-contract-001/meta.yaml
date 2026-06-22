@@ -1,0 +1,24 @@
+schema_version: "1.0"
+job_id: "gateway-source-registry-contract-001"
+parent_job_id: "gateway-context-envelope-contract-001"
+level: "capability"
+capability:
+  id: "cic_mcp.gateway.source_registry_contract"
+  target_repo: "cic-mcp-gateway"
+  change_type: "new_capability"
+  status_after_merge: "experimental"
+kb_focus: ["cic-mcp-gateway", "source-registry", "trust-domain", "schema-contract"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: []
+  branch: "feature/gateway-source-registry-contract-001"
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-06-22T14:43:59Z"
+  started: ""
+  completed: ""
