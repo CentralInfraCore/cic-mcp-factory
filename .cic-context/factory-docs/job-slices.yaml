@@ -558,6 +558,33 @@ jobs:
       - "breaking or changing the Docker builder service's PYTHONPATH-based dependency resolution as a side effect of this fix"
       - "claiming the stdio handshake works without actually running it as a subprocess (in-process Python calls do not count as proof here, per session-mcp-config-wiring-001's own evidence bar)"
 
+  - job_id: "session-docs-comment-audit-001"
+    phase: "3"
+    target_repo: "cic-mcp-session"
+    change_type: "fix"
+    status_after_merge: "experimental"
+    goal: "Fix documentation/comment drift discovered by independent orchestrator review after session-mcp-venv-fix-001: README.md, CLAUDE.md, docs/hu/architecture.md and docs/en/architecture.md still describe the repo as an empty base-repo bootstrap scaffold with 'nothing implemented yet', even though the full session pipeline (envelope ingest, raw event store, worker loop, turn projector, chunk indexer, vector/hybrid/FTS search, session_api, 7-tool MCP server, host-native .venv-host launch) has since been built and proven across ~17 capability-jobs. MANIFEST.sha256 also has 14 mismatched files (confirmed via 'sha256sum -c MANIFEST.sha256')."
+    prerequisites:
+      - "session-mcp-venv-fix-001"
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#cic-mcp-session"
+      - ".cic-context/factory-docs/execution-phases.md#Phase 3"
+    output_files:
+      - "output/session-docs-comment-audit-report.md"
+    acceptance_gates:
+      - "README.md, CLAUDE.md, docs/hu/architecture.md, docs/en/architecture.md 'current status' sections are rewritten to accurately reflect the implemented pipeline, with file:line citations of the SPECIFIC capability-job reports/code that prove each claim (not just restating CLAUDE.md from memory)."
+      - "A systematic grep-based scan across session_store/*.py, hooks/log-event.py, mcp-server/session_server.py, mk/infra.mk, Makefile module-level docstrings/comments for other stale claims ('not yet implemented', 'TODO', 'placeholder', 'scaffold') is performed and every hit is individually judged stale-or-accurate with a one-line justification — not just the four files already known to be stale."
+      - "MANIFEST.sha256 regenerated via 'make manifest-update' and re-verified via 'make manifest-verify' afterward, with both command outputs quoted."
+      - "The existing Docker-based and host-native (.venv-host) workflows are proven unaffected by this fix (this is a docs/comments-only change, no functional code touched) — a quick regression check (e.g. existing test suite still green) is quoted as evidence of that boundary, not assumed."
+    required_evidence:
+      - "Before/after diff of each fixed documentation file, quoted."
+      - "Full grep output of the systematic stale-comment scan, quoted, with a per-hit verdict (stale / accurate / not applicable)."
+      - "make manifest-update + make manifest-verify output, quoted."
+    forbidden_shortcuts:
+      - "fixing only the two findings already flagged (CLAUDE.md, MANIFEST.sha256) without doing the systematic scan across the other files listed in required_evidence"
+      - "rewriting status sections from general knowledge of what 'should' be true instead of citing the specific job report/file that proves each implemented claim"
+      - "touching any functional code path as a side effect of a docs/comments-only fix"
+
   - job_id: "gateway-session-adapter-contract-001"
     phase: "2"
     target_repo: "cic-mcp-gateway"

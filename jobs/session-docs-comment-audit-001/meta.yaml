@@ -1,0 +1,24 @@
+schema_version: "1.0"
+job_id: "session-docs-comment-audit-001"
+parent_job_id: "session-mcp-venv-fix-001"
+level: "capability"
+capability:
+  id: "cic_mcp.session.docs_comment_audit"
+  target_repo: "cic-mcp-session"
+  change_type: "fix"
+  status_after_merge: "experimental"
+kb_focus: ["cic-mcp-session", "documentation", "drift", "MANIFEST", "comments"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: []
+  branch: "feature/session-docs-comment-audit-001"
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-06-22T14:16:56Z"
+  started: ""
+  completed: ""
