@@ -1,0 +1,24 @@
+schema_version: "1.0"
+job_id: "shared-session-catalog-consumer-001"
+parent_job_id: ""
+level: "capability"
+capability:
+  id: "cic_mcp.shared.session_catalog_consumer"
+  target_repo: "cic-mcp-shared"
+  change_type: "new_capability"
+  status_after_merge: "experimental"
+kb_focus: ["cic-mcp-shared", "cic-mcp-session", "session-catalog", "trust-domain"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: ["cic-mcp-session"]
+  branch: "feature/shared-session-catalog-consumer-001"
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-06-22T20:34:52Z"
+  started: ""
+  completed: ""
