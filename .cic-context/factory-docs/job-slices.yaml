@@ -470,6 +470,36 @@ jobs:
       - "inventing brand-new fixtures when an existing, already-proven fixture from a prior job covers the same function"
       - "modifying mcp-server/server.py"
 
+  - job_id: "session-mcp-config-wiring-001"
+    phase: "3"
+    target_repo: "cic-mcp-session"
+    change_type: "enhancement"
+    status_after_merge: "experimental"
+    goal: "Wire mcp-server/session_server.py (all 7 session_api tools, built by session-mcp-tools-001/session-mcp-tools-remaining-001) into the repo's local-dev launch tooling — a new 'cic-session' entry in .mcp.json.tpl and a matching Makefile target — so a developer's own local Claude Code session CAN launch it via the documented recipe, without registering or launching it inside any live orchestrator session as part of this job."
+    prerequisites:
+      - "session-mcp-tools-remaining-001"
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#Schema szeparacio"
+      - ".cic-context/factory-docs/execution-phases.md#Phase 3"
+    output_files:
+      - "output/session-mcp-config-wiring-report.md"
+    acceptance_gates:
+      - "A new 'cic-session' entry is added to .mcp.json.tpl, alongside the existing 'cic-graph' entry (which is NOT modified), pointing at mcp-server/session_server.py via the same {{REPO_ROOT}} placeholder convention."
+      - "CRITICAL SECURITY CONSTRAINT: the new entry MUST NOT hardcode SESSION_STORE_PG_PASSWORD or any other secret value into the committed .mcp.json.tpl. Either the entry omits an 'env' block entirely (relying on SessionStoreConfig.from_env()'s existing fallback to the invoking shell's environment, the same convention already used throughout this repo's own test runs) or it documents required env vars without values. This gate is non-negotiable — a job that embeds a real or placeholder-but-realistic-looking password string in a git-tracked file fails this gate regardless of any other claim."
+      - "A new Makefile target (e.g. mcp.run.session / infra.mcp.run.session) is added mirroring the EXISTING infra.mcp.run target's structure exactly, pointing at session_server.py instead of server.py."
+      - "Reachability is proven by ACTUALLY running 'make mcp.config' and confirming the rendered .mcp.json contains both entries with correctly substituted paths, AND by actually launching mcp-server/session_server.py via the exact command+args the rendered .mcp.json specifies (as a subprocess, with real env vars set in the test process) and confirming the MCP stdio handshake succeeds (e.g. a basic list_tools call over the real stdio transport, not just an in-process Python call)."
+      - "This job explicitly does NOT register or launch the new server inside any live orchestrator/Claude Code session as part of doing the work — that remains a separate, manual, human decision after this job closes, stated explicitly in the report."
+    required_evidence:
+      - "The full diff of .mcp.json.tpl and the new Makefile target, quoted."
+      - "The rendered .mcp.json output after running 'make mcp.config', quoted, showing both entries."
+      - "The actual subprocess-launch + stdio MCP handshake output, quoted — not just an in-process function/list_tools() call like prior jobs used, since this job's claim is specifically about the LAUNCH RECIPE working, not just the tool code."
+      - "Confirmation that mcp-server/server.py and the existing 'cic-graph' .mcp.json.tpl entry are unchanged."
+    forbidden_shortcuts:
+      - "embedding any secret (DB password) into the committed .mcp.json.tpl"
+      - "claiming this is 'deployed' to any live Claude Code/orchestrator session — it is only a launchable local-dev recipe until a human takes that separate step"
+      - "proving only the in-process Python call again (already proven by prior jobs) instead of the actual subprocess + stdio handshake this job is specifically about"
+      - "modifying the existing cic-graph entry or mcp-server/server.py"
+
   - job_id: "gateway-session-adapter-contract-001"
     phase: "2"
     target_repo: "cic-mcp-gateway"
