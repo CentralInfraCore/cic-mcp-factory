@@ -16,9 +16,9 @@ agent:
 workplace:
   repos: []
   branch: "feature/gateway-context-envelope-contract-001"
-status: "agent_done"
+status: "done"
 error_message: ""
 timestamps:
   created: "2026-06-22T11:56:15Z"
   started: "2026-06-22T14:11:13Z"
-  completed: "2026-06-22T14:21:52Z"
+  completed: "2026-06-22T14:23:12Z"
