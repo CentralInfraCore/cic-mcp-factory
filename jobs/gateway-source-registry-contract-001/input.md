@@ -149,8 +149,7 @@ ami a gateway saját bejegyzése lenne — tiltott").
 Elfogadott `Status` értékek: `proven`, `partial`, `missing`, `rejected`, `unknown`.
 `proven` egy "az enum szinkronban van" állításra KIZÁRÓLAG akkor használható, ha mindkét
 schema-fájl (`gateway-context-envelope.schema.yaml` ÉS a saját
-`gateway-source-registry.schema.yaml`) konkrét enum-listája egymás mellett, szó szerint
-idézve van — az állítás kimondása a riportban ≠ a két fájl tényleges egyezése, csak a
+`gateway-source-registry.schema.yaml`) konkrét enum-listája egymás mellett, szó szerint idézve van — a fájl létezése nem jelenti a tartalom egyezését, csak a
 side-by-side idézet bizonyít.
 
 ## Definition Of Done
