@@ -16,9 +16,9 @@ agent:
 workplace:
   repos: []
   branch: "feature/session-docs-comment-audit-001"
-status: "running"
+status: "agent_done"
 error_message: ""
 timestamps:
   created: "2026-06-22T14:16:56Z"
   started: "2026-06-22T14:19:21Z"
-  completed: ""
+  completed: "2026-06-22T14:37:40Z"
