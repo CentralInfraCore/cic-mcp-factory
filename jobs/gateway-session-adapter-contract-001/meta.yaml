@@ -16,9 +16,9 @@ agent:
 workplace:
   repos: ["cic-mcp-session"]
   branch: "feature/gateway-session-adapter-contract-001"
-status: "agent_done"
+status: "done"
 error_message: ""
 timestamps:
   created: "2026-06-22T15:37:26Z"
   started: "2026-06-22T15:43:26Z"
-  completed: "2026-06-22T15:53:54Z"
+  completed: "2026-06-22T15:54:52Z"
