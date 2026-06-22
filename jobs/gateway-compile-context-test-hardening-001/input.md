@@ -207,6 +207,7 @@ a hiba, amit ez a job javít).
 
 ## Forbidden Shortcuts
 
+- a "2 passed" pytest exit code ≠ sikeres bizonyíték — a tényleges DB chunk-sorszámot is idézni kell, a zöld teszt önmagában nem elég
 - kézzel/heurisztikusan írt `requirements.txt` a `pip-compile` kimenete helyett
 - a teszt-asszertáció "lazítása" úgy, hogy az MÉG KÖNNYEBBEN passzoljon (csak
   SZIGORÍTÁS megengedett)
