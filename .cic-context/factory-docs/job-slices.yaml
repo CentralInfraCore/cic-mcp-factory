@@ -688,6 +688,35 @@ jobs:
       - "seeding test data via a hand-written SQL INSERT that bypasses cic-mcp-session's own envelope_writer/turn_projector/chunk_indexer pipeline"
       - "claiming candidate-readiness without the unavailable-session case also being exercised with real output"
 
+  - job_id: "gateway-compile-context-test-hardening-001"
+    phase: "2"
+    target_repo: "cic-mcp-gateway"
+    change_type: "fix"
+    status_after_merge: "candidate"
+    goal: "Fix a found test-robustness gap in the merged session-context-pack-v1-001 capability: requirements.txt is desynced from requirements.in (missing sentence-transformers/markdown/faiss-cpu), which lets test_compile_context.py's available-session test pass silently even when chunk indexing fails (the weak assertion is satisfied by the status-summary note alone). Regenerate requirements.txt via pip-compile, rebuild .venv-host, and harden the test assertion to require real context_pack-derived content."
+    prerequisites:
+      - "session-context-pack-v1-001"
+    required_context:
+      - "output/session-context-pack-v1-report.md#Findings"
+      - "output/session-context-pack-v1-report.md#Risks"
+    output_files:
+      - "output/gateway-compile-context-test-hardening-report.md"
+    acceptance_gates:
+      - "requirements.txt regenerated via the canonical pip-compile path (docker compose run --rm setup, per docker-compose.yml's setup service), not hand-edited."
+      - ".venv-host rebuilt from the regenerated requirements.txt, with sentence-transformers/markdown/faiss-cpu actually importable."
+      - "The available-session test assertion is strengthened so it FAILS when get_session_context_pack() returns no real chunk rows -- not just checking that session_derived_notes is non-empty (which the status-summary note alone always satisfies)."
+      - "The hardened test is re-run against a fresh Postgres container and PASSES with real, DB-verified chunk rows -- not just a green pytest exit code."
+      - "Full tests/ suite regression run quoted, showing whether the pre-existing markdown/faiss collection errors are now resolved as a side effect."
+    required_evidence:
+      - "requirements.txt diff, quoted."
+      - ".venv-host rebuild output, quoted."
+      - "The exact test assertion diff."
+      - "Fresh-container hardened test run output AND the actual session_core.chunks row count from a direct DB query, both quoted."
+    forbidden_shortcuts:
+      - "hand-written or heuristic requirements.txt instead of pip-compile output"
+      - "weakening any existing assertion to make the test pass more easily -- only strengthening is allowed"
+      - "claiming the test is fixed without quoting the actual DB chunk count proving real content was exercised"
+
   - job_id: "shared-session-catalog-consumer-001"
     phase: "4"
     target_repo: "cic-mcp-shared"
