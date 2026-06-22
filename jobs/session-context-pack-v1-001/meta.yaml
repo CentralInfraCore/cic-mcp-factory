@@ -16,7 +16,7 @@ agent:
 workplace:
   repos: ["cic-mcp-session"]
   branch: "feature/session-context-pack-v1-001"
-status: "agent_done"
+status: "done"
 error_message: ""
 timestamps:
   created: "2026-06-22T16:15:43Z"
