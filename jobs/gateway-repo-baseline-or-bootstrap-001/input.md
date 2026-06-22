@@ -63,10 +63,12 @@ grep -rn "gateway" --include="*.py" cic-mcp-gateway/ | grep -v test_ | grep -v "
 
 (vagy ekvivalens — a cél: bizonyítani, hogy a `mcp-server/server.py`/`make_source.py` a
 generikus `base-repo` KB-template kódja, NEM gateway-specifikus implementáció — tehát a
-repo könyvtárszerkezetének léte ≠ gateway capability implementálva.)
+fájl/könyvtár létezése ≠ implemented: a repo könyvtárszerkezetének léte önmagában NEM
+bizonyítja hogy egy capability implemented.)
 
-Az eredményt (file:sor szintű találatok VAGY a "0 gateway-specifikus találat" tény) idézd
-az outputban.
+Az eredményt (a hívó fájl és sor, azaz `file:line` szintű találatok VAGY a "0
+gateway-specifikus találat" tény) idézd az outputban — `symbol létezik` ≠ `production
+hívja`.
 
 ### 2. Minimális gateway felelősségi kör (kontraktus-vázlat, NEM kód)
 
