@@ -1,0 +1,24 @@
+schema_version: "1.0"
+job_id: "session-mcp-config-wiring-001"
+parent_job_id: "session-mcp-tools-remaining-001"
+level: "capability"
+capability:
+  id: "cic_mcp.session.mcp_config_wiring"
+  target_repo: "cic-mcp-session"
+  change_type: "enhancement"
+  status_after_merge: "experimental"
+kb_focus: ["cic-mcp-session", "mcp-server", "mcp.json.tpl", "makefile"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: []
+  branch: "feature/session-mcp-config-wiring-001"
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-06-22T05:00:00Z"
+  started: ""
+  completed: ""
