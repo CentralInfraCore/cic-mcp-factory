@@ -1,0 +1,24 @@
+schema_version: "1.0"
+job_id: "factory-session-bridge-001"
+parent_job_id: ""
+level: "capability"
+capability:
+  id: "cic_mcp.factory.session_bridge"
+  target_repo: "cic-mcp-factory"
+  change_type: "enhancement"
+  status_after_merge: "experimental"
+kb_focus: ["cic-mcp-factory", "session-bridge", "SessionIngressEnvelope", "meta.yaml"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: []
+  branch: "feature/factory-session-bridge-001"
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-06-22T16:10:27Z"
+  started: ""
+  completed: ""
