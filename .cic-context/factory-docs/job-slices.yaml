@@ -658,6 +658,36 @@ jobs:
     forbidden_shortcuts:
       - "current events.jsonl is final source-of-truth"
 
+  - job_id: "session-context-pack-v1-001"
+    phase: "2"
+    target_repo: "cic-mcp-gateway"
+    change_type: "new_capability"
+    status_after_merge: "candidate"
+    goal: "Implement the FIRST real compile_context() function in cic-mcp-gateway that actually calls at least one cic-mcp-session MCP tool (real subprocess + stdio handshake, real Postgres-backed data) and assembles a real, schema-valid GatewayContextEnvelope instance from the response -- the first end-to-end proof that the gateway-session-adapter-contract-001 contract is actually implementable, not just designed."
+    prerequisites:
+      - "gateway-session-adapter-contract-001"
+    required_context:
+      - ".cic-context/factory-docs/execution-phases.md#Phase 2"
+      - ".cic-context/factory-docs/architecture.md#Fo hatarok"
+    output_files:
+      - "output/session-context-pack-v1-report.md"
+    acceptance_gates:
+      - "A real compile_context(session_id) function exists in cic-mcp-gateway (exact module path is the agent's engineering call) that launches the cic-mcp-session MCP server as a genuine subprocess and performs a real stdio MCP handshake (list_tools + call_tool), the SAME evidence bar as session-mcp-venv-fix-001 -- in-process Python calls or mocked MCP responses do not count as proof."
+      - "The function is exercised against a real, freshly-migrated Postgres test instance with at least one real session_id containing real chunk/turn data (not a hand-typed fixture dict) -- the data must come from actually inserting/projecting through cic-mcp-session's own real pipeline (envelope_writer/turn_projector/chunk_indexer), not synthetic SQL INSERTs that bypass it."
+      - "The resulting GatewayContextEnvelope instance is validated against gateway-context-envelope.schema.yaml's actual required fields (programmatic check, e.g. via a YAML schema validator or an equivalent field-presence check script -- not just visual inspection)."
+      - "At least one passing automated test (pytest or equivalent) exercises this real end-to-end path and is included/runnable in the PR."
+      - "The unavailable-session behavior defined in gateway-session-adapter-contract-001 (proof_requirements[] signaling) is also exercised against a real, deliberately-nonexistent session_id, with actual output quoted."
+    required_evidence:
+      - "Actual stdio MCP handshake transcript (list_tools + call_tool) against the real cic-mcp-session server, quoted."
+      - "The real session_id used, and proof it was populated via cic-mcp-session's own ingestion pipeline (which capability-job's migration/tooling was used to seed it), not a hand-written INSERT."
+      - "The actual resulting GatewayContextEnvelope YAML/JSON, quoted in full, plus the schema-validation result."
+      - "Actual pytest output (pass) for the new test(s), quoted."
+    forbidden_shortcuts:
+      - "mocking or hand-constructing the GatewayContextEnvelope instance instead of actually calling compile_context() against a real session"
+      - "claiming the MCP handshake works without launching the cic-mcp-session server as a genuine subprocess"
+      - "seeding test data via a hand-written SQL INSERT that bypasses cic-mcp-session's own envelope_writer/turn_projector/chunk_indexer pipeline"
+      - "claiming candidate-readiness without the unavailable-session case also being exercised with real output"
+
   - job_id: "shared-session-catalog-consumer-001"
     phase: "4"
     target_repo: "cic-mcp-shared"

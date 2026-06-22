@@ -1,0 +1,24 @@
+schema_version: "1.0"
+job_id: "session-context-pack-v1-001"
+parent_job_id: "gateway-session-adapter-contract-001"
+level: "capability"
+capability:
+  id: "cic_mcp.gateway.compile_context_v1"
+  target_repo: "cic-mcp-gateway"
+  change_type: "new_capability"
+  status_after_merge: "candidate"
+kb_focus: ["cic-mcp-gateway", "cic-mcp-session", "compile_context", "GatewayContextEnvelope"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: ["cic-mcp-session"]
+  branch: "feature/session-context-pack-v1-001"
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-06-22T16:15:43Z"
+  started: ""
+  completed: ""
