@@ -81,7 +81,14 @@ DB-ben eredményül kapott sorszámokat (pl. `SELECT count(*) FROM session_core.
 
 ### 2. `compile_context(session_id)` implementáció
 
-Írd meg a függvényt, amely:
+Először GREP-pel erősítsd meg a hívni kívánt tool-ok tényleges `@mcp.tool()`
+regisztrációját a `cic-mcp-session` klónban (teszt-fájlok kizárva):
+
+```
+grep -rn "@mcp.tool()" -A 1 mcp-server/session_server.py | grep -v test_
+```
+
+Idézd a kimenetet. Írd meg a függvényt, amely:
 1. egy ÖNÁLLÓ subprocess-ként elindítja a `cic-mcp-session` MCP szervert
    (`.venv-host/bin/python mcp-server/session_server.py` vagy ekvivalens, lásd
    `session-mcp-venv-fix-report.md` mintáját) és valódi `mcp.client.stdio`-val
