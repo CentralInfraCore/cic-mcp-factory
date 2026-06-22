@@ -14,7 +14,7 @@ agent:
   model: "claude-sonnet-4-6"
   session_id: ""
 workplace:
-  repos: []
+  repos: ["cic-mcp-session"]
   branch: "feature/gateway-compile-context-test-hardening-001"
 status: "running"
 error_message: ""
