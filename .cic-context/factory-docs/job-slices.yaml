@@ -442,6 +442,34 @@ jobs:
       - "modifying the existing mcp-server/server.py (the cic-graph KB server) — it is unrelated and out of scope"
       - "claiming this is wired into any live MCP client config when it has not been"
 
+  - job_id: "session-mcp-tools-remaining-001"
+    phase: "3"
+    target_repo: "cic-mcp-session"
+    change_type: "enhancement"
+    status_after_merge: "experimental"
+    goal: "Extend the existing mcp-server/session_server.py (created by session-mcp-tools-001, which wraps search_context_hybrid only) with MCP tools for ALL remaining session_api.* functions — search_context, search_context_vector, get_timeline, get_context_pack, session_status, get_source_refs — completing the MCP tool surface for the whole session_api layer using the now-proven thin-wrapper pattern."
+    prerequisites:
+      - "session-mcp-tools-001"
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#Schema szeparacio"
+      - ".cic-context/factory-docs/execution-phases.md#Phase 3"
+    output_files:
+      - "output/session-mcp-tools-remaining-report.md"
+    acceptance_gates:
+      - "Six new MCP tools are added to the EXISTING mcp-server/session_server.py (not a new file, not a rewrite of the existing search_session_context tool) — one per remaining session_api.* function: search_context, search_context_vector, get_timeline, get_context_pack, session_status, get_source_refs. Each is a thin wrapper (no SQL logic duplicated/reimplemented in Python), mirroring session_server.py's existing search_session_context style exactly."
+      - "Each tool is proven via BOTH levels established by session-mcp-tools-001: (a) direct Python function call against a real Postgres fixture, AND (b) the actual FastMCP dispatch path (mcp.list_tools() shows all 7 tools registered; mcp.call_tool() actually invokes each new one)."
+      - "Each tool reuses an existing, already-proven test fixture from its underlying function's own job (session-retrieval-quality-001 for search_context/session_status, session-vector-search-api-001 for search_context_vector, session-source-refs-api-001 for get_source_refs) rather than inventing new fixtures from scratch — get_timeline and get_context_pack may reuse any existing multi-turn fixture already present in the test suite."
+      - "mcp-server/server.py (the unrelated cic-graph KB server) remains untouched."
+    required_evidence:
+      - "mcp.list_tools() output showing all 7 registered tool names, quoted."
+      - "For each of the 6 new tools: one mcp.call_tool() invocation output, quoted, matching the corresponding underlying SQL function's already-proven result shape from its origin job's report."
+      - "Confirmation the existing test suite (including the session-mcp-tools-001 search_session_context behavior) still passes unmodified."
+    forbidden_shortcuts:
+      - "wrapping a function with only the bare Python call proven, skipping the actual mcp.call_tool() dispatch proof for any of the 6 tools"
+      - "reimplementing any SQL function's logic (FTS, vector, RRF, provenance join) in Python"
+      - "inventing brand-new fixtures when an existing, already-proven fixture from a prior job covers the same function"
+      - "modifying mcp-server/server.py"
+
   - job_id: "gateway-session-adapter-contract-001"
     phase: "2"
     target_repo: "cic-mcp-gateway"
