@@ -64,6 +64,17 @@ paraméterekkel, és a visszatérési értéket HOGYAN fordítaná
 `mcp-server/session_server.py` konkrét `file:line` szignatúráját — NE találd ki a tool
 paramétereit emlékezetből.
 
+Először GREP-pel erősítsd meg, hogy a hivatkozott tool-ok valóban `@mcp.tool()`-ként
+regisztráltak (nem csak egy belső segédfüggvény), és a teszt-fájlokat zárd ki a
+keresésből:
+
+```
+grep -rn "@mcp.tool()" -A 1 mcp-server/session_server.py | grep -v test_
+```
+
+Idézd a teljes kimenetet — ez bizonyítja MELYIK függvények tényleges, kliens-oldalról
+hívható MCP tool-ok (nem csak belső Python segédfüggvények).
+
 ### 2. Trust mapping
 
 Térképezd fel: a `cic-mcp-session` saját trust-szótára (`session.trust = session_local /
@@ -132,9 +143,8 @@ nem elérhető" esetet mutatja (a 3. lépés döntése szerint kitöltve).
 
 Elfogadott `Status` értékek: `proven`, `partial`, `missing`, `rejected`, `unknown`.
 `proven` egy "az adapter ezt a tool-t hívja X paraméterekkel" állításra KIZÁRÓLAG akkor
-használható, ha a `mcp-server/session_server.py` tényleges sora idézve van — a tool
-neve megemlítve a riportban nem bizonyítja a tényleges szignatúrát, csak a fájl konkrét
-sorának idézése bizonyít.
+használható, ha a `mcp-server/session_server.py` tényleges sora idézve van — a fájl léte ≠ implemented, a tool neve megemlítve a riportban nem bizonyítja a tényleges
+szignatúrát, csak a fájl konkrét sorának idézése bizonyít.
 
 ## Definition Of Done
 
