@@ -16,9 +16,9 @@ agent:
 workplace:
   repos: ["cic-mcp-session"]
   branch: "feature/gateway-compile-context-test-hardening-001"
-status: "agent_done"
+status: "done"
 error_message: ""
 timestamps:
   created: "2026-06-22T19:41:15Z"
   started: "2026-06-22T19:44:03Z"
-  completed: "2026-06-22T20:27:17Z"
+  completed: "2026-06-22T20:27:58Z"
