@@ -16,9 +16,9 @@ agent:
 workplace:
   repos: []
   branch: "feature/factory-session-bridge-001"
-status: "agent_done"
+status: "done"
 error_message: ""
 timestamps:
   created: "2026-06-22T16:10:27Z"
   started: "2026-06-22T16:19:10Z"
-  completed: "2026-06-22T16:28:34Z"
+  completed: "2026-06-22T16:29:35Z"
