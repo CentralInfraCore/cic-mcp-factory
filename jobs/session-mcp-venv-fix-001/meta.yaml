@@ -16,9 +16,9 @@ agent:
 workplace:
   repos: []
   branch: "feature/session-mcp-venv-fix-001"
-status: "running"
+status: "agent_done"
 error_message: ""
 timestamps:
   created: "2026-06-22T09:16:19Z"
   started: "2026-06-22T09:19:39Z"
-  completed: ""
+  completed: "2026-06-22T10:40:43Z"
