@@ -16,9 +16,9 @@ agent:
 workplace:
   repos: ["cic-mcp-session"]
   branch: "feature/shared-session-catalog-consumer-001"
-status: "agent_done"
+status: "done"
 error_message: ""
 timestamps:
   created: "2026-06-22T20:34:52Z"
   started: "2026-06-22T20:36:42Z"
-  completed: "2026-06-22T20:45:27Z"
+  completed: "2026-06-22T20:46:10Z"
