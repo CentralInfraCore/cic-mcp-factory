@@ -531,6 +531,33 @@ jobs:
       - "claiming this was tested against a real, live Claude Code session when it was only tested with constructed sample payloads"
       - "actually installing/activating the hook in any live .claude/settings.json as part of this job"
 
+  - job_id: "session-mcp-venv-fix-001"
+    phase: "3"
+    target_repo: "cic-mcp-session"
+    change_type: "fix"
+    status_after_merge: "experimental"
+    goal: "Fix the pre-existing bug (flagged by session-mcp-config-wiring-001 but explicitly out of scope there) that .mcp.json.tpl's command (\"{{REPO_ROOT}}/p_venv/bin/python\") never actually exists after `make deps`, because the docker-compose 'setup' service installs dependencies with `pip install --target /app/p_venv` (a flat package directory for the Docker `builder` service's PYTHONPATH-based workflow), not a real venv with a bin/python symlink — so BOTH the existing 'cic-graph' AND the new 'cic-session' .mcp.json.tpl entries are currently broken for host-native (non-Docker) launch."
+    prerequisites:
+      - "session-mcp-config-wiring-001"
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#Schema szeparacio"
+      - ".cic-context/factory-docs/execution-phases.md#Phase 3"
+    output_files:
+      - "output/session-mcp-venv-fix-report.md"
+    acceptance_gates:
+      - "A fix is proposed and justified for making `{{REPO_ROOT}}/p_venv/bin/python` (or an equivalently-named host-native interpreter path referenced by .mcp.json.tpl) actually exist and work after a documented command — either (a) a new, separate host-native venv target that does NOT touch the existing Docker-based 'setup'/'builder' services' own behavior, or (b) changing .mcp.json.tpl's command/env to match how p_venv ACTUALLY works today (PYTHONPATH-based, system python3) instead of assuming a venv layout that was never built that way. The exact mechanism is the agent's engineering call, but it MUST NOT alter the existing Docker 'builder' service's own dependency-resolution behavior (PYTHONPATH=/app:/app/p_venv) as a side effect."
+      - "BOTH .mcp.json.tpl entries (cic-graph AND cic-session) end up using the SAME, now-actually-working launch mechanism — this fix is not scoped to one entry only, since both share the identical root cause."
+      - "Reachability proven the SAME way session-mcp-config-wiring-001 proved it: an actual subprocess launched with the post-fix command/args, real env vars in the test process, and a genuine stdio MCP handshake (list_tools()) against BOTH the cic-graph and cic-session servers, not just an in-process Python call."
+      - "The existing Docker-based `make deps`/`make up`/`make shell`/`make build` workflow is proven to still work unmodified after this fix (regression check on the OTHER, pre-existing use of p_venv)."
+    required_evidence:
+      - "The exact diff of whatever files change (.mcp.json.tpl, Makefile, mk/infra.mk, docker-compose.yml, or a new script), quoted."
+      - "Actual stdio MCP handshake output for BOTH cic-graph and cic-session after the fix, quoted."
+      - "Actual output proving the Docker builder/setup workflow is unaffected (e.g. `make deps` or equivalent re-run, quoted)."
+    forbidden_shortcuts:
+      - "fixing only the cic-session entry while leaving cic-graph's identical, pre-existing breakage unaddressed"
+      - "breaking or changing the Docker builder service's PYTHONPATH-based dependency resolution as a side effect of this fix"
+      - "claiming the stdio handshake works without actually running it as a subprocess (in-process Python calls do not count as proof here, per session-mcp-config-wiring-001's own evidence bar)"
+
   - job_id: "gateway-session-adapter-contract-001"
     phase: "2"
     target_repo: "cic-mcp-gateway"
