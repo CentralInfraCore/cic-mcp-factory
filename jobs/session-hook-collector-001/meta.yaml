@@ -1,0 +1,24 @@
+schema_version: "1.0"
+job_id: "session-hook-collector-001"
+parent_job_id: "session-raw-event-store-001"
+level: "capability"
+capability:
+  id: "cic_mcp.session.hook_collector"
+  target_repo: "cic-mcp-session"
+  change_type: "new_capability"
+  status_after_merge: "experimental"
+kb_focus: ["cic-mcp-session", "hook", "collector", "envelope-writer", "ingestion"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: []
+  branch: "feature/session-hook-collector-001"
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-06-22T06:07:15Z"
+  started: ""
+  completed: ""
