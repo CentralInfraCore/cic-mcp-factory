@@ -163,8 +163,8 @@ EZT HASZNÁLJA egy éles Claude Code session-ben" állítástól — az utóbbi 
 
 Elfogadott `Status` értékek: `proven`, `partial`, `missing`, `rejected`, `unknown`.
 `proven` KIZÁRÓLAG akkor használható, ha a tényleges `make mcp.config` kimenet ÉS a
-tényleges subprocess+stdio handshake kimenet idézve van. A tool-ok léte a kódban ≠
-a launch-recept működik — csak a tényleges subprocess-indítás és stdio-válasz
+tényleges subprocess+stdio handshake kimenet idézve van. A `.mcp.json.tpl`-ben lévő
+bejegyzés léte ≠ működik — csak a tényleges subprocess-indítás és stdio-válasz
 bizonyít.
 
 ## Definition Of Done
