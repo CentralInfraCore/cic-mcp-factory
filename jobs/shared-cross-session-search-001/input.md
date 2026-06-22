@@ -157,8 +157,7 @@ nélkül egy automatikus "superseded" jelölés se válhatna `canonical`-lá).
 
 Elfogadott `Status` értékek: `proven`, `partial`, `missing`, `rejected`, `unknown`.
 `proven` egy "ez a tool ezt a szignatúrát adja" állításra KIZÁRÓLAG akkor használható,
-ha a `mcp-server/session_server.py` tényleges sora idézve van — a fájl léte ≠
-implemented, a tool neve megemlítve a riportban nem bizonyítja a tényleges szignatúrát.
+ha a `mcp-server/session_server.py` tényleges sora idézve van — a fájl léte ≠ implemented (ez egyetlen soron), a tool neve megemlítve a riportban nem bizonyítja a tényleges szignatúrát.
 
 ## Definition Of Done
 
