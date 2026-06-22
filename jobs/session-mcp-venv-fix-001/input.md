@@ -122,8 +122,7 @@ Futtasd le a TELJES meglévő `tests/test_session_store/` suite-ot.
 
 Elfogadott `Status` értékek: `proven`, `partial`, `missing`, `rejected`, `unknown`.
 `proven` KIZÁRÓLAG akkor használható, ha a tényleges subprocess+stdio handshake
-kimenet idézve van — mindkét szerverre. A `.mcp.json.tpl`-ben lévő bejegyzés léte ≠
-működik — csak a tényleges futtatás bizonyít.
+kimenet idézve van — mindkét szerverre. A `.mcp.json.tpl`-ben lévő bejegyzés léte ≠ működik — csak a tényleges futtatás bizonyít.
 
 ## Definition Of Done
 
