@@ -59,12 +59,18 @@ mappájába kerül, push a `feature/factory-session-bridge-001` branch-re KÖZVE
 
 ### 1. Mely `meta.yaml`/session mezők szükségesek a session-katalógushoz
 
-Listázd fel KONKRÉTAN, mely meglévő `meta.yaml` mezők (idézve a `jobs/.schema/meta.yaml`-ból,
-`file:line` hivatkozással) közvetlenül megfelelnek egy `SessionIngressEnvelope`/session-
-katalógus mezőnek (pl. `job_id` → `provider_session_id`-szerű azonosító,
-`agent.session_id` → a tényleges Claude Code session, `timestamps.*` →
-`occurred_at`/`ingested_at`). Mely MEGLÉVŐ mező HIÁNYZIK, amit a session-katalógushoz fel
-kellene venni?
+Először GREP-pel szedd ki a `jobs/.schema/meta.yaml` TELJES mezőlistáját (a teszt-fájlok
+nem relevánsak itt, de a kizárás konzisztens maradjon a mintával):
+
+```
+grep -rn "^[a-z_]*:" jobs/.schema/meta.yaml | grep -v test_
+```
+
+Idézd a teljes kimenetet. Ebből KONKRÉTAN listázd fel, mely mezők (file:line
+hivatkozással) közvetlenül megfelelnek egy `SessionIngressEnvelope`/session-katalógus
+mezőnek (pl. `job_id` → `provider_session_id`-szerű azonosító, `agent.session_id` → a
+tényleges Claude Code session, `timestamps.*` → `occurred_at`/`ingested_at`). Mely
+MEGLÉVŐ mező HIÁNYZIK, amit a session-katalógushoz fel kellene venni?
 
 ### 2. Miért nem elég a jelenlegi `events.jsonl`
 
