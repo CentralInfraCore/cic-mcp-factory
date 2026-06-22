@@ -2,12 +2,12 @@
 
 ## Kontextus
 
-A `gateway-repo-baseline-or-bootstrap-001` audit job megerősítette: a `cic-mcp-gateway`
-repo `scaffold` állapotban van (bootstrap kész, dokumentáció-réteg gateway-specifikus, de
-nulla domain-logika kód), és javasolta ezt a jobot, mint a logikailag első contract-jobot —
-a source registry (egy KÖVETKEZŐ job) értelmetlen lenne anélkül, hogy tudnánk, MILYEN
-formátumba kell egy forrásnak (`cic-mcp-session`/`cic-mcp-shared`/`cic-mcp-knowledge`)
-illeszkednie.
+A `gateway-repo-baseline-or-bootstrap-001` felmérő job megerősítette: a `cic-mcp-gateway`
+repo kód-mentes, csak dokumentáció-réteggel rendelkező állapotban van (bootstrap kész,
+dokumentáció-réteg gateway-specifikus, de nulla domain-logika kód), és javasolta ezt a
+jobot, mint a logikailag első contract-jobot — a source registry (egy KÖVETKEZŐ job)
+értelmetlen lenne anélkül, hogy tudnánk, MILYEN formátumba kell egy forrásnak
+(`cic-mcp-session`/`cic-mcp-shared`/`cic-mcp-knowledge`) illeszkednie.
 
 Ez a job a `GatewayContextEnvelope` ELSŐ formális schema-kontraktusát definiálja — azt a
 trust-jelölt kontextus-csomagot, amit a gateway agent-facing API-ja visszaad. A
@@ -15,8 +15,9 @@ trust-jelölt kontextus-csomagot, amit a gateway agent-facing API-ja visszaad. A
 javasolt egy mezőlistát (`answer_type`, `query_intent`, `scope`, `sources_used`,
 `trust_summary`, `canonical_facts`, `workdir_facts`, `session_derived_notes`,
 `shared_memory_notes`, `conflicts`, `proof_requirements`, `refs`) — ez a job EBBŐL indul ki
-és formalizálja YAML schema-ként, az előző audit "GatewayContextEnvelope — Initial Boundary"
-hármas-bontására épülve (honnan jött / mi a tartalom / milyen trust-jelölés van rajta).
+és formalizálja YAML schema-ként, az előző felmérés "GatewayContextEnvelope — Initial
+Boundary" hármas-bontására épülve (honnan jött / mi a tartalom / milyen trust-jelölés van
+rajta).
 
 A `cic-mcp-session` `SessionIngressEnvelope` schema-ja
 (`cic-mcp-session/output/session-ingress-envelope.schema.yaml`) ennek az ökoszisztémának a
@@ -50,7 +51,7 @@ job, `gateway-source-registry-contract-001`), és NEM a tényleges routing/adapt
   `dec-thead-0005` ("cic-mcp-gateway is a trust-domain aware context compiler, not a
   generic search proxy")
 - **KÖTELEZŐ elsődleges forrás:**
-  - `cic-mcp-gateway/output/gateway-baseline.md` — az előző audit job riportja, a
+  - `cic-mcp-gateway/output/gateway-baseline.md` — az előző felmérő job riportja, a
     "GatewayContextEnvelope — Initial Boundary" + "Decisions Proposed" + "Risks" szekció
     (a doc/kód divergencia kockázat) — EBBŐL indulj ki, NE kezdd nulláról
   - `cic-mcp-gateway/docs/hu/architecture.md` és `docs/en/architecture.md` — "Tervezett
@@ -98,7 +99,7 @@ properties:
 
 ### 1. `GatewayContextEnvelope` YAML schema
 
-Formalizáld a doc-tervből + az előző audit "GatewayContextEnvelope — Initial Boundary"
+Formalizáld a doc-tervből + az előző felmérés "GatewayContextEnvelope — Initial Boundary"
 szekciójából a teljes schema-t, a "Schema stílus-konvenció" szerint. KÖTELEZŐ mezők
 (`acceptance_gates` szerint, ez a minimum, bővíthető a doc-terv többi mezőjével is):
 
@@ -185,8 +186,7 @@ csak a schema dokumentációja mondja ki explicit).
 
 Elfogadott `Status` értékek: `proven`, `partial`, `missing`, `rejected`, `unknown`.
 `proven` egy "a schema tartalmazza X mezőt" állításra KIZÁRÓLAG akkor használható, ha a
-schema-fájl konkrét sora/property-blokkja idézve van — a mező EMLÍTÉSE a report
-narratívájában ≠ a mező tényleges jelenléte a schema-fájlban, csak a tényleges
+schema-fájl konkrét sora/property-blokkja idézve van — a riportban való szöveges említés ≠ a fájl tényleges létezését vagy tartalmát bizonyítja, csak a tényleges
 `output/gateway-context-envelope.schema.yaml` fájl-tartalom idézése bizonyít.
 
 ## Definition Of Done
