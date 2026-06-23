@@ -87,6 +87,16 @@ Idézd a kimenetet, erősítsd meg mindkettő `status: "done"`. Ha NEM, NO-GO é
 
 ### 2. Converter implementáció
 
+Először GREP-pel erősítsd meg az `insert_envelope`/`ON CONFLICT` tényleges call-chain-jét
+(teszt-fájlok kizárva):
+
+```
+grep -rn "def insert_envelope\|ON CONFLICT" session_store/envelope_writer.py | grep -v test_
+```
+
+Idézd a kimenetet — ez a `file:line` hivatkozás, amely bizonyítja, hogy a dedupe-
+mechanizmus a converter ALATT már létezik és nem kell újraírni.
+
 Írj egy függvényt (pl. `session_store/chatgpt_import.py`, `chatgpt_message_to_envelope
 (conversation: dict, node: dict, provider_session_id: str) -> dict` szignatúrával vagy
 hasonlóval), amely EGY ChatGPT export `mapping`-node-ot (a
