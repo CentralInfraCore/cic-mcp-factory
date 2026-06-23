@@ -1,0 +1,24 @@
+schema_version: "1.0"
+job_id: "historical-chatgpt-export-importer-001"
+parent_job_id: ""
+level: "capability"
+capability:
+  id: "cic_mcp.session.historical_chatgpt_importer"
+  target_repo: "cic-mcp-session"
+  change_type: "new_capability"
+  status_after_merge: "experimental"
+kb_focus: ["cic-mcp-session", "SessionIngressEnvelope", "historical-import", "chatgpt-export"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: []
+  branch: "feature/historical-chatgpt-export-importer-001"
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-06-23T03:52:38Z"
+  started: ""
+  completed: ""
