@@ -81,8 +81,17 @@ jelöltet `candidate` (`promotion_candidate`) állapotba emelnek:
   miért: egy factory-job-hoz kötött jelölt nagyobb eséllyel egy VALÓS, dokumentált
   döntés, nem véletlen lexikai egyezés
   - itt KÖTELEZŐ konkrétan megnevezni, MELY `meta.yaml`/`jobs/index.yaml` mező adná
-    ezt a linkage-t (pl. `capability_id`, `target_repo`, `job_id` — idézd a
-    `jobs/.schema/meta.yaml`-t ha szükséges)
+    ezt a linkage-t. Először GREP-pel erősítsd meg a tényleges mező-neveket
+    (teszt-fájlok kizárva, bár ezen a séma-fájlon ez no-op):
+    ```
+    grep -rn "^[a-z_]*:" jobs/.schema/meta.yaml | grep -v test_
+    ```
+    Idézd a kimenetet, és ebből válassz konkrét mezőt (pl. `capability_id`,
+    `target_repo`, `job_id`) — a választott mezőre add meg a `file:line` hivatkozást
+    a `jobs/.schema/meta.yaml`-ban, és legalább egy MEGLÉVŐ, lezárt job `meta.yaml`-
+    jából is idézd ugyanazt a mezőt (pl. `jobs/shared-cross-session-search-001/
+    meta.yaml`-ból) — ez bizonyítja, hogy a mező NEM csak a sémában létezik, hanem
+    tényleges, korábban kitöltött jobokban is megjelenik
 - **recency-bónusz**: frissebb bizonyíték magasabb súlyt kap-e, és ha igen, milyen
   egyszerű (NEM ML-alapú) függvénnyel (pl. lineáris decay, vagy egyszerű "utolsó N nap"
   ablak) — indokold, miért elég egy egyszerű függvény (a tényleges implementáció egy
