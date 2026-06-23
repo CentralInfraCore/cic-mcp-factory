@@ -1,0 +1,24 @@
+schema_version: "1.0"
+job_id: "shared-cross-session-aggregator-implementation-001"
+parent_job_id: "shared-core-storage-implementation-001"
+level: "capability"
+capability:
+  id: "cic_mcp.shared.cross_session_aggregator"
+  target_repo: "cic-mcp-shared"
+  change_type: "new_capability"
+  status_after_merge: "candidate"
+kb_focus: ["cic-mcp-shared", "cic-mcp-session", "cross-session-aggregator", "weighting"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: ["cic-mcp-session"]
+  branch: "feature/shared-cross-session-aggregator-implementation-001"
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-06-23T20:24:17Z"
+  started: ""
+  completed: ""
