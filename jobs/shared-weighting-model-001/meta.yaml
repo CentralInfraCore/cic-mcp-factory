@@ -16,9 +16,9 @@ agent:
 workplace:
   repos: []
   branch: "feature/shared-weighting-model-001"
-status: "agent_done"
+status: "done"
 error_message: ""
 timestamps:
   created: "2026-06-23T03:28:27Z"
   started: "2026-06-23T03:31:58Z"
-  completed: "2026-06-23T03:40:34Z"
+  completed: "2026-06-23T03:41:38Z"
