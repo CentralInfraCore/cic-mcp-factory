@@ -1,0 +1,24 @@
+schema_version: "1.0"
+job_id: "gateway-context-pack-production-wiring-001"
+parent_job_id: "gateway-compile-context-test-hardening-001"
+level: "capability"
+capability:
+  id: "cic_mcp.gateway.context_pack_tool"
+  target_repo: "cic-mcp-gateway"
+  change_type: "enhancement"
+  status_after_merge: "candidate"
+kb_focus: ["cic-mcp-gateway", "compile_context", "mcp-tool", "production-wiring"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: ["cic-mcp-session"]
+  branch: "feature/gateway-context-pack-production-wiring-001"
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-06-23T21:12:19Z"
+  started: ""
+  completed: ""
