@@ -16,9 +16,9 @@ agent:
 workplace:
   repos: []
   branch: "feature/shared-core-storage-implementation-001"
-status: "running"
+status: "agent_done"
 error_message: ""
 timestamps:
   created: "2026-06-23T19:45:53Z"
   started: "2026-06-23T19:48:48Z"
-  completed: ""
+  completed: "2026-06-23T20:01:17Z"
