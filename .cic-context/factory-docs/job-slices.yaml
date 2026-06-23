@@ -836,29 +836,11 @@ jobs:
       - "asserting dedupe works without a real, twice-run Postgres test"
       - "re-deriving the field mapping instead of reusing historical-chatgpt-export-importer-001's report"
 
-  - job_id: "session-mcp-live-registration-001"
-    phase: "6"
-    target_repo: "cic-mcp-factory"
-    change_type: "enhancement"
-    status_after_merge: "experimental"
-    goal: "Register the cic-mcp-session MCP server in cic-mcp-factory's own .mcp.json (mirroring the existing cic-graph entry), so future orchestrator sessions get live cic-session tool access instead of only cic-graph."
-    prerequisites:
-      - "session-mcp-tools-001"
-      - "session-mcp-tools-remaining-001"
-      - "session-mcp-config-wiring-001"
-    output_files:
-      - "output/session-mcp-live-registration.md"
-    acceptance_gates:
-      - "Report confirms prerequisites are complete or marks job NO-GO."
-      - ".mcp.json (or .mcp.json.tpl, whichever this repo actually uses) gains a cic-session entry pointing at the cic-mcp-session clone's mcp-server/session_server.py via its .venv-host python, env vars forwarded explicitly (not relying on env inheritance)."
-      - "Report proves at least one cic-session tool is actually callable from this registration (not just that the JSON entry exists)."
-      - "Report states this is a per-machine/per-clone config, not something committed with a real absolute path baked in if avoidable."
-    required_evidence:
-      - "Diff of the .mcp.json/.mcp.json.tpl entry."
-      - "A real tool call result (e.g. get_session_status or equivalent) made through the new registration, output quoted."
-    forbidden_shortcuts:
-      - "claiming the registration works because the JSON is syntactically valid, without an actual tool call proof"
-      - "hardcoding a machine-specific absolute path in a committed .mcp.json.tpl placeholder slot"
+  # NOTE: "session-mcp-live-registration-001" was considered here but turned out
+  # to be a local-machine config change (an untracked .mcp.json one level above
+  # any cloned repo, not part of any git remote) -- it does not fit the
+  # target_repo/PR capability-job model and was done directly by the
+  # orchestrator instead of as a formal job. See chat history for the change.
 
   - job_id: "gateway-context-pack-production-wiring-001"
     phase: "6"
