@@ -133,6 +133,16 @@ KÖTELEZŐ minimum:
 
 ### 4. Dedupe/idempotency
 
+Először GREP-pel erősítsd meg a `idempotency_key` mező tényleges definícióját a
+schema-fájlban (teszt-fájlok kizárva, bár ezen a fájlon ez no-op):
+
+```
+grep -rn "idempotency_key" jobs/session-ingress-envelope-contract-001/output/session-ingress-envelope.schema.yaml | grep -v test_
+```
+
+Idézd a kimenetet — ez a `file:line` hivatkozás, amely bizonyítja, hogy a mező nem
+csak megemlítve van, hanem a séma tényleges sorában definiált.
+
 A `SessionIngressEnvelope.idempotency_key` MÁR definiált hash-formula
 (`sha256(provider + provider_session_id + provider_event_name + raw_payload_hash)`,
 idézve a schema-fájlból). Definiáld: egy historikus importernél ez a formula
