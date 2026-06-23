@@ -82,9 +82,12 @@ meglévő teszt-harness fixture-öket (teszt-fájlok kizárva, bár ezen a két 
 részben no-op, mert maguk a tesztek a referencia):
 
 ```
-grep -n "^def compile_context" -A 15 gateway_core/compile_context.py
-grep -n "^def pg_config\|^def seeded_session_id\|^def session_repo_root" -A 3 tests/test_gateway_core/test_compile_context.py
+grep -rn "^def compile_context" -A 15 gateway_core/compile_context.py | grep -v test_
+grep -rn "^def pg_config\|^def seeded_session_id\|^def session_repo_root" -A 3 tests/test_gateway_core/test_compile_context.py
 ```
+
+(a második parancs maga a teszt-fájl olvasása, ezért itt nem alkalmazható a
+`grep -v test_` kizárás — ez a MINTA forrása, nem call-chain audit)
 
 Idézd a kimenetet. Hozz létre egy ÚJ `mcp-server/gateway_server.py` fájlt (KÜLÖN
 modul, NE módosítsd a meglévő `mcp-server/server.py`-t), amely:
