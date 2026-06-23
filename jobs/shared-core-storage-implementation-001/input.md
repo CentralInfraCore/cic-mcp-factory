@@ -66,6 +66,17 @@ Idézd a kimenetet, erősítsd meg mindhárom `status: "done"`. Ha NEM, NO-GO é
 
 ### 2. SQL schema — minden mező a három riportból
 
+Először GREP-pel erősítsd meg, van-e már meglévő SQL/schema-fájl-konvenció a
+`cic-mcp-shared` repóban (teszt-fájlok kizárva):
+
+```
+grep -rn "CREATE SCHEMA\|CREATE TABLE" --include="*.sql" . | grep -v test_
+find . -iname "*.sql" | grep -v test_
+```
+
+Idézd a kimenetet — ha van meglévő `schema/`-szerű mappa/konvenció, kövesd azt; ha
+nincs, indokold a választott helyet a "Decisions Proposed"-ben.
+
 Írj egy SQL schema-fájlt, amely létrehoz egy `shared_core` schemát és egy
 candidate-record táblát (pl. `shared_core.candidates`), tartalmazva PONTOSAN ezeket
 a mezőket (semmi kihagyva, semmi átnevezve indoklás nélkül):
@@ -94,6 +105,11 @@ hossz), indokolt, ésszerű döntést hozz, és dokumentáld a "Decisions Propos
 szekcióban — de a MEZŐ MAGA nem hagyható ki.
 
 ### 3. `canonical` constraint — valós bizonyítás
+
+A riportban add meg a CHECK constraint pontos `file:line` hivatkozását a SQL
+schema-fájlban (ez egy schema-szintű job, nincs production call-site, mert a
+fogyasztó kód egy KÉSŐBBI job tárgya — de a constraint MAGÁNAK a SQL-ben kell
+léteznie, file:line-nal idézve, NEM elég megemlíteni).
 
 A `canonical` mező védelmét VALÓS Postgres teszttel bizonyítsd:
 1. egy `INSERT` `trust='mixed', canonical=false` — sikeres
