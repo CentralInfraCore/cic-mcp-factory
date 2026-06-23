@@ -811,3 +811,27 @@ jobs:
       - "dedupe/idempotency."
     forbidden_shortcuts:
       - "markdown export as source-of-truth when structured export exists"
+
+  - job_id: "historical-dedupe-idempotency-001"
+    phase: "5"
+    target_repo: "cic-mcp-session"
+    change_type: "new_capability"
+    status_after_merge: "candidate"
+    goal: "Implement and test the historical-export-to-SessionIngressEnvelope converter from historical-chatgpt-export-importer-001's contract, proving dedupe/idempotency against a real Postgres fixture (synthetic data only, no personal export content)."
+    prerequisites:
+      - "historical-chatgpt-export-importer-001"
+      - "session-raw-event-store-001"
+    output_files:
+      - "output/historical-dedupe-idempotency.md"
+    acceptance_gates:
+      - "Report confirms prerequisites are complete or marks job NO-GO."
+      - "Converter implementation follows the field mapping from historical-chatgpt-export-importer-001's report exactly (provider, provider_session_id, occurred_at, payload, provider_event_name)."
+      - "Real Postgres test proves a re-run on the same synthetic fixture produces zero duplicate session_raw.envelopes rows (via insert_envelope's existing ON CONFLICT (idempotency_key) DO NOTHING)."
+      - "Test fixture is entirely synthetic/fabricated — no content from any real personal export bundle."
+    required_evidence:
+      - "Converter function file:line."
+      - "Real pytest run output against a fresh Postgres instance, run twice on identical fixture input, showing row count unchanged on the second run."
+    forbidden_shortcuts:
+      - "using any real personal export content (even partially) as test fixture data"
+      - "asserting dedupe works without a real, twice-run Postgres test"
+      - "re-deriving the field mapping instead of reusing historical-chatgpt-export-importer-001's report"
