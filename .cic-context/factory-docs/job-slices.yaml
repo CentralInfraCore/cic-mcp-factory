@@ -835,3 +835,126 @@ jobs:
       - "using any real personal export content (even partially) as test fixture data"
       - "asserting dedupe works without a real, twice-run Postgres test"
       - "re-deriving the field mapping instead of reusing historical-chatgpt-export-importer-001's report"
+
+  - job_id: "session-mcp-live-registration-001"
+    phase: "6"
+    target_repo: "cic-mcp-factory"
+    change_type: "enhancement"
+    status_after_merge: "experimental"
+    goal: "Register the cic-mcp-session MCP server in cic-mcp-factory's own .mcp.json (mirroring the existing cic-graph entry), so future orchestrator sessions get live cic-session tool access instead of only cic-graph."
+    prerequisites:
+      - "session-mcp-tools-001"
+      - "session-mcp-tools-remaining-001"
+      - "session-mcp-config-wiring-001"
+    output_files:
+      - "output/session-mcp-live-registration.md"
+    acceptance_gates:
+      - "Report confirms prerequisites are complete or marks job NO-GO."
+      - ".mcp.json (or .mcp.json.tpl, whichever this repo actually uses) gains a cic-session entry pointing at the cic-mcp-session clone's mcp-server/session_server.py via its .venv-host python, env vars forwarded explicitly (not relying on env inheritance)."
+      - "Report proves at least one cic-session tool is actually callable from this registration (not just that the JSON entry exists)."
+      - "Report states this is a per-machine/per-clone config, not something committed with a real absolute path baked in if avoidable."
+    required_evidence:
+      - "Diff of the .mcp.json/.mcp.json.tpl entry."
+      - "A real tool call result (e.g. get_session_status or equivalent) made through the new registration, output quoted."
+    forbidden_shortcuts:
+      - "claiming the registration works because the JSON is syntactically valid, without an actual tool call proof"
+      - "hardcoding a machine-specific absolute path in a committed .mcp.json.tpl placeholder slot"
+
+  - job_id: "gateway-context-pack-production-wiring-001"
+    phase: "6"
+    target_repo: "cic-mcp-gateway"
+    change_type: "enhancement"
+    status_after_merge: "candidate"
+    goal: "Wire compile_context() into an actual gateway request-handling entry point (currently zero production callers — only its own module and tests call it), proven against a disposable test Postgres, not a literal production instance."
+    prerequisites:
+      - "session-context-pack-v1-001"
+      - "gateway-compile-context-test-hardening-001"
+    output_files:
+      - "output/gateway-context-pack-production-wiring.md"
+    acceptance_gates:
+      - "Report confirms prerequisites are complete or marks job NO-GO."
+      - "Report names the actual gateway entry point compile_context() is wired into, with file:line for both the call site and compile_context()'s own definition."
+      - "A real, disposable-Postgres-backed test proves the entry point returns session-derived chunk notes through the full call chain, not just a status note (the same hardening bar as gateway-compile-context-test-hardening-001)."
+      - "Report does not claim a literal production Postgres instance exists — wiring is proven against a disposable test instance, deployment to a real instance is explicitly out of scope."
+    required_evidence:
+      - "Call-chain grep proving the entry point actually invokes compile_context() (not just imports it)."
+      - "Real pytest run output against a fresh Postgres instance."
+    forbidden_shortcuts:
+      - "claiming production wiring without a named, file:line-cited call site"
+      - "asserting the gateway entry point works without a real test run"
+
+  - job_id: "shared-core-storage-implementation-001"
+    phase: "6"
+    target_repo: "cic-mcp-shared"
+    change_type: "new_capability"
+    status_after_merge: "candidate"
+    goal: "Write the FIRST real Python/SQL implementation in cic-mcp-shared: the shared_core.* candidate-record Postgres schema, from the field tables already defined across the three existing design reports (catalog-consumer, cross-session-search, weighting-model). Currently this repo has zero implementation code, only output/*.md design reports."
+    prerequisites:
+      - "shared-session-catalog-consumer-001"
+      - "shared-cross-session-search-001"
+      - "shared-weighting-model-001"
+    output_files:
+      - "output/shared-core-storage-implementation.md"
+    acceptance_gates:
+      - "Report confirms prerequisites are complete or marks job NO-GO."
+      - "SQL schema includes every field from all three design reports' candidate-record tables (candidate_id, trust, canonical, provenance_refs[], conflicting_with, superseded_by, superseded_at, superseded_reviewed_by, weight_score, recurrence_count, linked_factory_job_ids[], last_evidence_at, recency_flag, weighting_evaluated_at), with no field silently dropped or renamed without justification in Findings."
+      - "canonical column has a real constraint/default ensuring it cannot be true without the schema-level review fields populated (mirrors cic-mcp-shared CLAUDE.md trust model: canonical: false by default)."
+      - "A real, disposable Postgres test proves: insert, the canonical=false default, and that conflicting_with/superseded_by are nullable self-references that work correctly."
+    required_evidence:
+      - "schema.sql file:line for every field, traced back to which design report row it came from."
+      - "Real pytest/psql run output proving the schema applies cleanly and the canonical-false default holds."
+    forbidden_shortcuts:
+      - "inventing new candidate-record fields not already in the three design reports without flagging it as a new decision in Findings"
+      - "a canonical column without a real constraint/default backing the trust model's 'never auto-canonical' rule"
+      - "claiming the schema works without a real database test run"
+
+  - job_id: "shared-cross-session-aggregator-implementation-001"
+    phase: "6"
+    target_repo: "cic-mcp-shared"
+    change_type: "new_capability"
+    status_after_merge: "candidate"
+    goal: "Implement the actual cross-session aggregator function designed in shared-cross-session-search-001 and shared-weighting-model-001: queries cic-mcp-session's search_session_context MCP tool across N session_ids for a given keyword query, computes the normalized cross-session ranking and weighting factors, and persists weighted candidates into the shared_core schema from shared-core-storage-implementation-001."
+    prerequisites:
+      - "shared-cross-session-search-001"
+      - "shared-weighting-model-001"
+      - "shared-core-storage-implementation-001"
+    output_files:
+      - "output/shared-cross-session-aggregator-implementation.md"
+    acceptance_gates:
+      - "Report confirms prerequisites are complete or marks job NO-GO."
+      - "Aggregator code calls cic-mcp-session's actual MCP tool (subprocess-launched, following the SessionServerLaunchConfig pattern from cic-mcp-gateway's compile_context.py, file:line cited) -- not a mocked/stubbed session response."
+      - "Weighting factors (recurrence, factory linkage, recency) are computed exactly per shared-weighting-model-001's formula, file:line cited against that report."
+      - "A real, disposable-Postgres-backed test proves at least one end-to-end run: N synthetic session fixtures -> aggregator -> a persisted shared_core candidate row with a non-trivial weight_score."
+      - "No real personal session content is used in the test fixtures -- synthetic only, same bar as historical-dedupe-idempotency-001."
+    required_evidence:
+      - "Real pytest run output, including the actual MCP subprocess call (not mocked)."
+      - "Persisted row contents quoted (structure/fields, not any sensitive content -- fixtures are synthetic so this is not a concern here, but state it explicitly)."
+    forbidden_shortcuts:
+      - "mocking the cic-mcp-session MCP call instead of a real subprocess-launched server"
+      - "reinventing the weighting formula instead of citing shared-weighting-model-001"
+      - "using real personal session content in test fixtures"
+
+  - job_id: "historical-import-runner-001"
+    phase: "6"
+    target_repo: "cic-mcp-session"
+    change_type: "new_capability"
+    status_after_merge: "candidate"
+    goal: "Implement the actual file-reading, mapping-tree-walking batch runner that drives historical-dedupe-idempotency-001's converter across a full (synthetic, multi-shard) export bundle and calls insert_envelope() for each node -- closing the gap that the converter exists but nothing currently reads an export file end-to-end. Running this against any real personal export bundle is explicitly OUT OF SCOPE for this job and requires a separate, dedicated security discussion before being considered."
+    prerequisites:
+      - "historical-dedupe-idempotency-001"
+      - "historical-chatgpt-export-importer-001"
+    output_files:
+      - "output/historical-import-runner.md"
+    acceptance_gates:
+      - "Report confirms prerequisites are complete or marks job NO-GO."
+      - "Runner implements a concrete mapping-tree traversal order (resolving the open question left by historical-chatgpt-export-importer-001), with the chosen order justified in Decisions Proposed."
+      - "Runner supports resuming a partially-completed multi-shard import (idempotency_key dedupe makes re-running safe, but report must state this explicitly and prove it with a real test: kill mid-run, re-run, no duplicates, all rows present)."
+      - "Test fixtures are a SYNTHETIC multi-shard bundle (at least 3 fabricated shard files, mirroring the real export's sharded conversations-NNN.json structure) -- no real personal export content anywhere."
+      - "Report explicitly states that running this runner against any real personal export bundle is out of scope and requires a separate security review before being attempted."
+    required_evidence:
+      - "Runner file:line, traversal-order code cited."
+      - "Real pytest run output: full synthetic bundle import, partial-then-resume scenario, dedupe proof across the resume."
+    forbidden_shortcuts:
+      - "using any real personal export content, even partially, as test fixture data"
+      - "running the import against a real export bundle without a separate, explicit security review first"
+      - "leaving the mapping-tree traversal order undecided/unimplemented"
