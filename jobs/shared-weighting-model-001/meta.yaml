@@ -1,0 +1,24 @@
+schema_version: "1.0"
+job_id: "shared-weighting-model-001"
+parent_job_id: "shared-cross-session-search-001"
+level: "capability"
+capability:
+  id: "cic_mcp.shared.weighting_model"
+  target_repo: "cic-mcp-shared"
+  change_type: "new_capability"
+  status_after_merge: "experimental"
+kb_focus: ["cic-mcp-shared", "weighting-model", "promotion-candidate", "canonical-promotion"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: []
+  branch: "feature/shared-weighting-model-001"
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-06-23T03:28:27Z"
+  started: ""
+  completed: ""
