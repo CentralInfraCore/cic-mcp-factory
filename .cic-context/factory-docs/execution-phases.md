@@ -147,3 +147,35 @@ Feltetel:
 - SessionIngressEnvelope stabil
 - session raw/core store stabil
 - source_ref es content_hash strategia kesz
+
+## Phase 6 - Wiring (tenyleges bekotes)
+
+Cel:
+
+- a Phase 0-5 alatt megepult, izoltan tesztelt kontraktusok/kod tenyleges
+  production call-chain-be kotese -- minden kapacitas mar letezik kodban es
+  valos Postgres ellen bizonyitva van, de jelenleg SEHOL nincs olyan allapot,
+  hogy egy live folyamat tenylegesen meghivna
+
+Elso capability-k:
+
+- `session-mcp-live-registration-001`
+- `gateway-context-pack-production-wiring-001`
+- `shared-core-storage-implementation-001`
+- `shared-cross-session-aggregator-implementation-001`
+- `historical-import-runner-001`
+
+Tudatosan KIHAGYVA ebbol a fazisbol (ember/operator dontes kell elotte, nem
+agent-job):
+
+- a session-hook tenyleges bekapcsolasa egy aktiv Claude Code settings.json-ba
+  (privacy/consent dontes: minden tool-use logolva lenne)
+- egy tartos, nem eldobhato production Postgres-instance felallitasa es a
+  worker-loop systemd timer tenyleges telepitese ellene (hosting-dontes)
+- a historical importer futtatasa valodi, szemelyes export-bundle ellen
+  (kulon biztonsagi review kell elotte, lasd `historical-import-runner-001`
+  forbidden_shortcuts)
+
+Feltetel:
+
+- Phase 2-5 mind `done`
