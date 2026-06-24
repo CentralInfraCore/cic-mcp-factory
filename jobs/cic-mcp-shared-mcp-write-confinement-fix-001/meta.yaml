@@ -1,0 +1,23 @@
+schema_version: "1.0"
+job_id: "cic-mcp-shared-mcp-write-confinement-fix-001"
+parent_job_id: ""
+level: "capability"
+capability:
+  id: "cic_mcp.session.mcp_write_confinement_fix"
+  target_repo: "cic-mcp-shared"
+  change_type: "fix"
+  status_after_merge: "candidate"
+kb_focus: ["cic-mcp-shared", "mcp-server", "security", "path-traversal"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: []
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-06-24T17:22:20Z"
+  started: ""
+  completed: ""
