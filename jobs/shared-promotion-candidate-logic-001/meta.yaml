@@ -1,0 +1,23 @@
+schema_version: "1.0"
+job_id: "shared-promotion-candidate-logic-001"
+parent_job_id: "shared-cross-session-aggregator-implementation-001"
+level: "capability"
+capability:
+  id: "cic_mcp.shared.promotion_candidate_gating"
+  target_repo: "cic-mcp-shared"
+  change_type: "fix"
+  status_after_merge: "candidate"
+kb_focus: ["cic-mcp-shared", "promotion-candidate", "trust-model", "weighting"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: []
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-06-24T05:47:25Z"
+  started: ""
+  completed: ""

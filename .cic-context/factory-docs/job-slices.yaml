@@ -940,3 +940,28 @@ jobs:
       - "using any real personal export content, even partially, as test fixture data"
       - "running the import against a real export bundle without a separate, explicit security review first"
       - "leaving the mapping-tree traversal order undecided/unimplemented"
+
+  - job_id: "shared-promotion-candidate-logic-001"
+    phase: "6"
+    target_repo: "cic-mcp-shared"
+    change_type: "fix"
+    status_after_merge: "candidate"
+    goal: "Implement the promotion_candidate gating decision (recurrence_count >= 2 AND weight_score >= THRESHOLD -> trust='candidate', else trust='mixed') that shared-cross-session-aggregator-implementation-001 deliberately left unimplemented -- that job declared PROMOTION_WEIGHT_THRESHOLD/PROMOTION_MIN_RECURRENCE but never used them, hardcoding trust='candidate' unconditionally on every insert. This emerged as a self-flagged follow-up from that job's own report, not a pre-planned Phase 6 slice."
+    prerequisites:
+      - "shared-cross-session-aggregator-implementation-001"
+    output_files:
+      - "output/shared-promotion-candidate-logic.md"
+    acceptance_gates:
+      - "Report confirms the prerequisite is complete or marks job NO-GO."
+      - "Report cites the exact file:line of the currently-hardcoded 'candidate' literal before changing it."
+      - "A standalone, unit-testable decision function implements the exact AND-condition from shared-weighting-model-001 lines 290-298, file:line cited."
+      - "A real Postgres + real MCP subprocess test proves BOTH branches: an input meeting the AND-condition inserts trust='candidate', an input failing it inserts trust='mixed' -- not just one branch."
+      - "Report explicitly states reviewed_shared/canonical promotion is NOT automated by this job -- that remains human-review-only per cic-mcp-shared/CLAUDE.md."
+    required_evidence:
+      - "grep -rn for the pre-existing hardcoded 'candidate' literal and the unused PROMOTION_* constants, test files excluded."
+      - "Real pytest run output showing both the candidate-branch and mixed-branch rows with their actual trust values."
+    forbidden_shortcuts:
+      - "testing only one of the two branches (candidate-only or mixed-only)"
+      - "automating any transition to reviewed_shared or canonical"
+      - "introducing an UPSERT pattern to re-evaluate already-inserted rows (out of scope)"
+      - "changing the THRESHOLD/MIN_RECURRENCE numeric values (already decided in the prerequisite job)"
