@@ -15,9 +15,9 @@ agent:
   session_id: ""
 workplace:
   repos: []
-status: "running"
+status: "agent_done"
 error_message: ""
 timestamps:
   created: "2026-06-24T16:42:46Z"
   started: "2026-06-24T16:47:52Z"
-  completed: ""
+  completed: "2026-06-24T17:04:42Z"
