@@ -10,7 +10,7 @@ jobs:
     completed: "2026-06-24T17:56:26Z"
   - id: "cic-mcp-knowledge-mcp-write-confinement-fix-001"
     level: "capability"
-    status: "agent_done"
+    status: "done"
     target_repo: "cic-mcp-knowledge"
     capability_id: "cic_mcp.knowledge.mcp_write_confinement_fix"
     created: "2026-06-24T17:22:20Z"
