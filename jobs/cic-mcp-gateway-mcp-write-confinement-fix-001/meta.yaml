@@ -3,7 +3,7 @@ job_id: "cic-mcp-gateway-mcp-write-confinement-fix-001"
 parent_job_id: ""
 level: "capability"
 capability:
-  id: "cic_mcp.session.mcp_write_confinement_fix"
+  id: "cic_mcp.gateway.mcp_write_confinement_fix"
   target_repo: "cic-mcp-gateway"
   change_type: "fix"
   status_after_merge: "candidate"
@@ -15,9 +15,9 @@ agent:
   session_id: ""
 workplace:
   repos: []
-status: "running"
+status: "agent_done"
 error_message: ""
 timestamps:
   created: "2026-06-24T17:22:20Z"
   started: "2026-06-24T17:30:16Z"
-  completed: ""
+  completed: "2026-06-24T17:56:26Z"
