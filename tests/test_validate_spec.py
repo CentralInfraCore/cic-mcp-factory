@@ -78,6 +78,43 @@ def test_k8_violation_missing_claim_evidence_table(tmp_path, repo_root, fixtures
     assert "FAIL: K4:" not in result.stdout
 
 
+def test_k7_violation_missing_grep(tmp_path, repo_root, fixtures_dir):
+    _make_job_dir(tmp_path, "k7_violation.md", fixtures_dir)
+    result = _run_validate_spec(tmp_path, repo_root)
+
+    assert result.returncode == 1
+    assert "MECHANIKUS ELLENŐRZÉS: NO-GO" in result.stdout
+    assert "FAIL: K7:" in result.stdout
+
+
+def test_k7b_violation_missing_test_exclusion(tmp_path, repo_root, fixtures_dir):
+    _make_job_dir(tmp_path, "k7b_violation.md", fixtures_dir)
+    result = _run_validate_spec(tmp_path, repo_root)
+
+    assert result.returncode == 1
+    assert "MECHANIKUS ELLENŐRZÉS: NO-GO" in result.stdout
+    assert "FAIL: K7b:" in result.stdout
+    assert "FAIL: K7:" not in result.stdout
+
+
+def test_k9_violation_missing_reachability_artifact(tmp_path, repo_root, fixtures_dir):
+    _make_job_dir(tmp_path, "k9_violation.md", fixtures_dir)
+    result = _run_validate_spec(tmp_path, repo_root)
+
+    assert result.returncode == 1
+    assert "MECHANIKUS ELLENŐRZÉS: NO-GO" in result.stdout
+    assert "FAIL: K9:" in result.stdout
+
+
+def test_go_audit_case_passes_k7_k9_when_satisfied(tmp_path, repo_root, fixtures_dir):
+    _make_job_dir(tmp_path, "go_audit.md", fixtures_dir)
+    result = _run_validate_spec(tmp_path, repo_root)
+
+    assert result.returncode == 0
+    assert "MECHANIKUS ELLENŐRZÉS: GO" in result.stdout
+    assert "FAIL:" not in result.stdout
+
+
 def test_missing_input_md_is_no_go(tmp_path, repo_root):
     (tmp_path / "jobs" / JOB_ID).mkdir(parents=True)
     result = _run_validate_spec(tmp_path, repo_root)
