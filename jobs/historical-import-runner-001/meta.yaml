@@ -1,0 +1,23 @@
+schema_version: "1.0"
+job_id: "historical-import-runner-001"
+parent_job_id: "historical-dedupe-idempotency-001"
+level: "capability"
+capability:
+  id: "cic_mcp.session.historical_import_runner"
+  target_repo: "cic-mcp-session"
+  change_type: "new_capability"
+  status_after_merge: "candidate"
+kb_focus: ["cic-mcp-session", "historical-import", "chatgpt-export", "batch-runner"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: []
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-06-24T04:25:40Z"
+  started: ""
+  completed: ""
