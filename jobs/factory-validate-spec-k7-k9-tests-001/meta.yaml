@@ -1,0 +1,23 @@
+schema_version: "1.0"
+job_id: "factory-validate-spec-k7-k9-tests-001"
+parent_job_id: "factory-tooling-test-suite-001"
+level: "capability"
+capability:
+  id: "cic_mcp.factory.validate_spec_k7_k9_coverage"
+  target_repo: "cic-mcp-factory"
+  change_type: "enhancement"
+  status_after_merge: "candidate"
+kb_focus: ["cic-mcp-factory", "validate-spec", "job-lifecycle", "tooling"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: []
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-06-24T07:51:02Z"
+  started: ""
+  completed: ""
