@@ -16,3 +16,4 @@ jobs/*/workspace-saved/
 jobs/*/output/events.jsonl
 __pycache__/
 .pytest_cache/
+.venv-host/
