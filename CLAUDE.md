@@ -251,10 +251,10 @@ ami ellen ezeket meg lehetne tervezni):
 - target repo diff validation (mit szabad/nem szabad módosítania egy capability-jobnak a target repóban)
 - claim-evidence tábla parser (jelenleg csak vizuálisan ellenőrzött `/job-review`-nál)
 - PR readiness checker (gépi GO/NO-GO a teljes "Kötelező PR-tartalom" listára, nem csak a spec-re)
-- automatizált tesztek a factory tooling-ra (`run-job.sh`, `update-index.sh`, `validate-spec.sh`
-  jelenleg csak manuálisan/futtatással ellenőrzött, nincs hozzájuk bats/pytest suite) — cél,
-  hogy ahogy a kapacitás-jobok is teszteket termelnek a target repókban, úgy a factory saját
-  lifecycle-tooling-ja is kapjon regressziós védelmet
+- ~~automatizált tesztek a factory tooling-ra~~ — MEGOLDVA: `tests/test_run_job.py`,
+  `tests/test_update_index.py`, `tests/test_validate_spec.py` (`factory-tooling-test-suite-001`,
+  K7/K7b/K9 lefedettséggel kiegészítve `factory-validate-spec-k7-k9-tests-001`-ben), CI-vel
+  bekötve (`.github/workflows/tests.yml`, `factory-tooling-ci-001`) — minden PR/push-on lefut
 
 ---
 
