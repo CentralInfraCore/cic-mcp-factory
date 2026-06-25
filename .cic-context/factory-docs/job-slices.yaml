@@ -965,3 +965,272 @@ jobs:
       - "automating any transition to reviewed_shared or canonical"
       - "introducing an UPSERT pattern to re-evaluate already-inserted rows (out of scope)"
       - "changing the THRESHOLD/MIN_RECURRENCE numeric values (already decided in the prerequisite job)"
+
+  - job_id: "session-transcript-reader-001"
+    phase: "7"
+    target_repo: "cic-mcp-session"
+    change_type: "new_capability"
+    status_after_merge: "candidate"
+    goal: "Build an incremental Claude Code transcript_path reader that extracts stable-id user/assistant/tool messages, pairs tool_use with tool_result, and emits SessionIngressEnvelope-compatible turns -- closing the gap where the Stop hook payload alone never contains the assistant's actual response text, only event metadata."
+    required_context:
+      - ".cic-context/factory-docs/architecture.md#Postgres-first elv"
+      - "session-ingress-envelope-contract-001 output (SessionIngressEnvelope schema)"
+      - "Claude Code transcript_path JSONL format (read directly from a real transcript file produced by this session)"
+    output_files:
+      - "output/session-transcript-reader.md"
+    acceptance_gates:
+      - "Report cites a real, produced transcript_path JSONL sample and the exact line-shape of a user turn, an assistant turn, and a tool_use/tool_result pair."
+      - "Incremental re-read only emits NEW turns on a second pass over an appended file -- proven with a real before/after diff, not asserted."
+      - "Every emitted turn has a stable id derived from the transcript content (not a random uuid), so re-ingesting the same file twice does not duplicate downstream rows."
+      - "tool_use and tool_result are paired into one turn record by their pairing id, with a real example output."
+    required_evidence:
+      - "Real Python run against a real transcript JSONL fixture, full output quoted."
+      - "Idempotency proof: same file read twice produces zero new turns on the second pass."
+    forbidden_shortcuts:
+      - "treating the Stop hook's own payload as containing the assistant's response text (it does not -- this is the bug being fixed)"
+      - "random/uuid4 turn ids (breaks idempotent re-ingestion)"
+      - "writing to any real ~/.claude or ~/.claude-personal settings.json (this job only reads a transcript file, never touches hook wiring)"
+
+  - job_id: "session-ingest-hook-sandboxed-001"
+    phase: "7"
+    target_repo: "cic-mcp-session"
+    change_type: "new_capability"
+    status_after_merge: "experimental"
+    goal: "Build and test the 6 Claude Code hook scripts (UserPromptSubmit, PostToolUse, PostToolUseFailure, Stop, SessionStart, SessionEnd) that would feed session-transcript-reader-001's output into the real ingest pipeline -- entirely inside a sandboxed settings.json and sandboxed Postgres instance. This job does NOT activate the hooks in any real Claude Code configuration -- that is an explicit human/operator privacy-consent decision (execution-phases.md Phase 6 'tudatosan KIHAGYVA'), out of this job's scope."
+    prerequisites:
+      - "session-transcript-reader-001"
+    required_context:
+      - "execution-phases.md#Phase 6 (the explicit human-decision-gate framing this job must respect)"
+      - "session-hook-collector-001 output (existing hook conventions, if any)"
+    output_files:
+      - "output/session-ingest-hook-sandboxed.md"
+      - "output/session-ingest-hook-go-live-checklist.md"
+    acceptance_gates:
+      - "All 6 hook scripts exist, each independently testable, each non-blocking (a hook failure must never abort the user's Claude Code turn)."
+      - "Tests run against a throwaway settings.json file created inside the job's own workspace/tmp dir -- NEVER ~/.claude/settings.json or ~/.claude-personal/settings*.json, proven by grep showing no such path appears as a write target anywhere in the new code."
+      - "A 'go-live checklist' document lists exactly what the human operator must do to activate this in a real settings.json -- this job does not do it."
+      - "Report explicitly states the failure-isolation guarantee (how a hook exception is caught and swallowed, with evidence)."
+    required_evidence:
+      - "grep -rn proving no write path touches a real settings.json anywhere in the new hook scripts or their tests."
+      - "Real test run: a deliberately-broken hook invocation does not propagate an exception to the caller."
+    forbidden_shortcuts:
+      - "writing to or modifying any file under ~/.claude/ or ~/.claude-personal/ (sandboxed only, this is the single most important forbidden shortcut in this job)"
+      - "a hook that can block or fail the user's actual Claude Code turn"
+      - "claiming 'go-live ready' as a status -- status_after_merge is experimental precisely because activation is gated on a separate human decision"
+
+  - job_id: "session-runtime-env-unification-001"
+    phase: "7"
+    target_repo: "cic-mcp-session"
+    change_type: "fix"
+    status_after_merge: "candidate"
+    goal: "Introduce one common env-file convention (e.g. session.env) that the ingest hook, the worker loop, the session MCP server, and the gateway session-adapter all load identically -- closing the drift where the worker and the MCP currently get configuration from different, independently-set environments."
+    required_context:
+      - "grep -rn for every place DB connection config (DSN/host/port/dbname) is currently read across worker_loop.py, mcp-server/session_server.py, and gateway_core/compile_context.py"
+    output_files:
+      - "output/session-runtime-env-unification.md"
+    acceptance_gates:
+      - "Report cites file:line for every pre-existing, independent config-loading site before unifying them."
+      - "A single env-file format is defined and loaded by all of: worker loop, session MCP server, ingest hook (from session-ingest-hook-sandboxed-001), gateway session-adapter call path."
+      - "A real smoke test starts at least two of these consumers against the same env file and proves (via a real DB query) that both see the identical database."
+    required_evidence:
+      - "grep -rn output of the pre-existing config-loading sites, before the change."
+      - "Real smoke test output showing two consumers querying the same DB instance, identified by a unique marker row."
+    forbidden_shortcuts:
+      - "asserting 'now unified' without a real, multi-consumer smoke test against the same DB"
+      - "a secrets file committed to git (env file must be gitignored, only a .env.example template committed)"
+
+  - job_id: "gateway-query-context-api-001"
+    phase: "7"
+    target_repo: "cic-mcp-gateway"
+    change_type: "enhancement"
+    status_after_merge: "candidate"
+    goal: "Extend gateway_core.compile_context.compile_context() (currently session_id/repo_root/max_chunks only, see file:line 354-359) with query/intent/repo/token_budget parameters, adding intent recognition, source selection, dedup/conflict surfacing, and token-budget-aware envelope assembly -- closing the gap where the gateway can only compile a context pack for one already-known session_id, never answer a free-form query."
+    required_context:
+      - "gateway_core/compile_context.py (current signature and implementation, read in full before extending)"
+      - "session-context-pack-v1-001 and gateway-compile-context-test-hardening-001 outputs (existing, already-tested behavior that must not regress)"
+    output_files:
+      - "output/gateway-query-context-api.md"
+    acceptance_gates:
+      - "Report cites the exact pre-change signature (file:line) before extending it."
+      - "The existing session_id-only call path keeps working unchanged -- real test proving no regression."
+      - "A new query-based call path is proven end-to-end with a real test: a free-form query returns a GatewayContextEnvelope sourced from session context, not just an echoed session_id lookup."
+      - "Token-budget enforcement is proven with a real test where a small budget actually truncates/limits the returned envelope."
+    required_evidence:
+      - "Real pytest output for both the unchanged session_id path and the new query path."
+      - "Real test proving token_budget actually constrains output size."
+    forbidden_shortcuts:
+      - "breaking or silently changing the existing session_id/repo_root/max_chunks call signature's behavior"
+      - "a token_budget parameter that is accepted but never enforced"
+      - "wiring knowledge/shared sources in this job (that is gateway-knowledge-shared-adapters-001, separate job)"
+
+  - job_id: "gateway-knowledge-shared-adapters-001"
+    phase: "7"
+    target_repo: "cic-mcp-gateway"
+    change_type: "enhancement"
+    status_after_merge: "candidate"
+    goal: "Wire the gateway's envelope compilation to actually call cic-mcp-knowledge's canonical search and cic-mcp-shared's candidate/reviewed_shared search -- currently the gateway only ever talks to the session adapter, despite GatewayContextEnvelope's trust-domain model assuming multiple sources."
+    prerequisites:
+      - "gateway-query-context-api-001"
+    required_context:
+      - "cic-mcp-knowledge mcp-server/server.py tool contract (search_query/search_nodes etc.)"
+      - "cic-mcp-shared's candidate search surface, if one already exists -- otherwise this job defines the minimal one needed"
+    output_files:
+      - "output/gateway-knowledge-shared-adapters.md"
+    acceptance_gates:
+      - "Report states, with file:line evidence, that only the session adapter is currently wired before this job."
+      - "A real subprocess test proves the gateway envelope includes at least one canonical knowledge result and at least one shared candidate/reviewed_shared result for a query that has matches in both."
+      - "Trust level is preserved per-source in the resulting envelope (a knowledge-sourced item is marked differently from a shared-candidate-sourced item) -- real test, not just a docstring claim."
+    required_evidence:
+      - "Real, multi-source subprocess test output showing the envelope's per-item trust/source tagging."
+    forbidden_shortcuts:
+      - "merging knowledge and shared results without preserving which source/trust-level each item came from"
+      - "treating a shared trust='mixed' or 'candidate' item as if it had the same trust as a canonical knowledge item"
+
+  - job_id: "shared-scoring-rework-001"
+    phase: "7"
+    target_repo: "cic-mcp-shared"
+    change_type: "fix"
+    status_after_merge: "candidate"
+    goal: "Fix shared_core/aggregator.py's cross_session_score formula (currently sum(sum(per_session_normalized)), file:line 268-294, confirmed via grep to have no ON CONFLICT/upsert anywhere in the file) -- replace the unbounded per-session summation with an absolute minimum-relevance threshold, a per-session score cap (max or top-k weighted average instead of raw sum), a minimum-evidence-count gate, and an idempotent ON CONFLICT upsert keyed on a candidate fingerprint, so repeated aggregation runs update existing rows instead of inserting duplicates."
+    required_context:
+      - "shared_core/aggregator.py (full file, read before changing)"
+      - "shared-cross-session-search-001 and shared-weighting-model-001 outputs (the original design this formula came from, NOT being thrown away wholesale -- this is a targeted fix, not a redesign from scratch)"
+    output_files:
+      - "output/shared-scoring-rework.md"
+    acceptance_gates:
+      - "Report cites the exact pre-change formula (file:line) and confirms via grep that no ON CONFLICT exists anywhere in aggregator.py before this job."
+      - "A real Postgres test proves: running aggregation twice on the same input data does NOT create two candidate rows (idempotent upsert, fingerprint-keyed)."
+      - "A real Postgres test proves: a single very-high-scoring session can no longer dominate the aggregate the way unbounded summation allowed -- before/after score comparison on the same fixture, both numbers quoted."
+      - "A real test proves: evidence below the minimum-count gate does not produce a candidate row at all."
+    required_evidence:
+      - "grep -rn confirming no pre-existing ON CONFLICT, before the change."
+      - "Real psql/pytest output for the idempotent-rerun proof and the before/after score-cap proof."
+    forbidden_shortcuts:
+      - "changing the trust/canonical CHECK constraint enforcement (already correct, out of scope, see shared-core-storage-implementation-001)"
+      - "an upsert that silently discards provenance_refs from the previous row instead of merging/appending them"
+      - "claiming the fix is 'proven' from the formula's code alone -- the idempotent-rerun and score-cap proofs must be from a real running Postgres"
+
+  - job_id: "shared-candidate-review-lifecycle-001"
+    phase: "7"
+    target_repo: "cic-mcp-shared"
+    change_type: "new_capability"
+    status_after_merge: "candidate"
+    goal: "Build a review/promote/reject CLI or MCP tool driving shared_core.candidates.trust through mixed -> candidate -> reviewed_shared, or -> superseded/rejected, with an audit log of every transition -- the DB-level gate (canonical requires trust=reviewed_shared, already enforced, see shared-core-storage-implementation.md 'Canonical Constraint - Real Postgres Proof') currently has no operator-facing interface driving it."
+    prerequisites:
+      - "shared-promotion-candidate-logic-001"
+    required_context:
+      - "shared_core.candidates schema (output/shared-core-storage-schema.sql, full file)"
+      - "cic-mcp-shared/CLAUDE.md Trust modell section"
+    output_files:
+      - "output/shared-candidate-review-lifecycle.md"
+    acceptance_gates:
+      - "A real, runnable command/tool exists that transitions a specific candidate_id's trust, with a real Postgres test proving the transition actually happened (row re-read after the call)."
+      - "Every transition is appended to an audit log (who/when/from-state/to-state/candidate_id), real test proving a row is written."
+      - "An attempt to set canonical=true on a row not at trust='reviewed_shared' is rejected by this tool's own validation BEFORE hitting the DB CHECK constraint -- but the DB constraint itself remains the final authority, not bypassed."
+      - "Report explicitly confirms this tool is operator-invoked, not triggered automatically by aggregation or weighting -- promotion stays human-review-only."
+    required_evidence:
+      - "Real Postgres test output for at least one full transition path and one rejected invalid transition."
+      - "Real audit-log row(s) shown after a transition."
+    forbidden_shortcuts:
+      - "any code path that sets canonical=true or trust=reviewed_shared without an explicit, separate operator invocation of this tool"
+      - "skipping the audit log for 'obvious' or 'low-risk' transitions"
+
+  - job_id: "session-outbox-batch-and-observability-001"
+    phase: "7"
+    target_repo: "cic-mcp-session"
+    change_type: "fix"
+    status_after_merge: "candidate"
+    goal: "Add a LIMIT to the unbounded FOR UPDATE SKIP LOCKED selects in turn_projector.py and chunk_indexer.py (confirmed via grep: no LIMIT currently, one worker locks the entire pending/failed queue for job_type in a single transaction), add a statement_timeout safety net, and start populating the already-existing-but-unused locked_by/locked_at columns (turn_projector.py:113 explicitly scopes this out today) for observability -- plus expose pending-count/oldest-pending-age/dead_letter-count/attempts-histogram via a metrics view or MCP tool. This does NOT rebuild the claim/retry mechanism -- attempts/max_attempts/dead_letter already work and are already tested (turn_projector.py:235-246), that part is explicitly out of scope."
+    required_context:
+      - "turn_projector.py and chunk_indexer.py (the exact FOR UPDATE SKIP LOCKED query sites, full functions)"
+      - "session-postgres-schema.sql session_jobs.outbox table definition (locked_by/locked_at/attempts/max_attempts columns already exist)"
+    output_files:
+      - "output/session-outbox-batch-and-observability.md"
+    acceptance_gates:
+      - "Report confirms via grep, before the change, that no LIMIT clause exists on either FOR UPDATE SKIP LOCKED query, and that locked_by/locked_at are never written anywhere in the codebase."
+      - "Real Postgres test proves a batch LIMIT actually bounds the number of rows locked in one transaction."
+      - "Real test proves locked_by/locked_at are populated on claim and cleared on completion."
+      - "A real metrics view/tool query returns pending-count, oldest-pending-age, dead_letter-count, and an attempts-histogram against a fixture with rows in multiple states."
+    required_evidence:
+      - "grep -rn confirming the pre-existing absence of LIMIT and of locked_by/locked_at writes."
+      - "Real Postgres test output for the batch-limit proof and the metrics-query proof."
+    forbidden_shortcuts:
+      - "rebuilding or changing the existing attempts/max_attempts/dead_letter retry logic (already correct and tested, out of scope)"
+      - "a metrics query that requires a new, separate long-lived process (must be queryable on demand, not a background daemon)"
+
+  - job_id: "session-schema-migration-tooling-001"
+    phase: "7"
+    target_repo: "cic-mcp-session"
+    change_type: "new_capability"
+    status_after_merge: "candidate"
+    goal: "Formalize the currently hand-applied-in-order SQL files (session-postgres-schema.sql plus the 5 later migration files under output/*.sql, confirmed via find) into a versioned migration runner: a schema_version table, enforced ordering, idempotent re-apply, a documented rollback policy, and a startup compatibility check."
+    required_context:
+      - "find output -iname '*.sql' -- the exact list and apply-order of every existing SQL file that must become a tracked migration"
+    output_files:
+      - "output/session-schema-migration-tooling.md"
+    acceptance_gates:
+      - "Report lists every existing SQL file (file:name) and the order they must apply in, confirmed against any existing apply-order documentation or git history."
+      - "A real Postgres test proves: running the migration runner twice in a row against a fresh DB is a no-op the second time (idempotent)."
+      - "A real Postgres test proves: the schema_version table correctly reflects which migrations have been applied after a partial run."
+      - "Report documents a rollback policy for at least one migration, with the exact reverse SQL or an explicit 'forward-only, no rollback' statement if that is the actual decision."
+    required_evidence:
+      - "Real psql output showing the migration runner applying the full set once, then a no-op second run."
+      - "Real schema_version table contents after a run."
+    forbidden_shortcuts:
+      - "reordering or rewriting any existing migration's SQL content (only formalize the existing, already-applied order)"
+      - "claiming idempotency without a real second-run test against the same database"
+
+  - job_id: "session-data-protection-001"
+    phase: "7"
+    target_repo: "cic-mcp-session"
+    change_type: "new_capability"
+    status_after_merge: "experimental"
+    goal: "Add a secret-redaction pass before raw envelope insert (or a controlled, access-restricted raw-vault tier), document a retention policy, confirm rollback_conversation() (already built in historical-import-rollback-tool-001) as the deletion primitive, and add an audit log for raw envelope reads -- the full raw hook payload and tool results can contain credentials/tokens/personal data with no redaction today."
+    required_context:
+      - "session_store/rollback.py rollback_conversation() (already implemented, this job reuses it as the deletion primitive, does not reimplement it)"
+      - "session_raw.envelopes schema (the insert path that needs the redaction pass)"
+    output_files:
+      - "output/session-data-protection.md"
+    acceptance_gates:
+      - "A real test proves: a synthetic envelope payload containing an obvious secret pattern (e.g. an API-key-shaped string) is redacted before being persisted to session_raw.envelopes."
+      - "Report confirms, with file:line, that rollback_conversation() is reused unchanged as the deletion primitive -- not reimplemented."
+      - "A retention policy document states a concrete default retention period and how it would be enforced (even if enforcement itself is a follow-up job)."
+      - "An audit log entry is written on every raw envelope read, real test proving a row is written."
+    required_evidence:
+      - "Real test output showing a secret-shaped string redacted in the persisted row."
+      - "Real test output showing an audit-log row written on a raw envelope read."
+    forbidden_shortcuts:
+      - "reimplementing conversation deletion instead of reusing rollback_conversation()"
+      - "a redaction pass that only works on one hardcoded secret pattern with no extensibility path documented"
+
+  - job_id: "golden-path-e2e-synthetic-001"
+    phase: "7"
+    target_repo: "cic-mcp-factory"
+    change_type: "new_capability"
+    status_after_merge: "candidate"
+    prerequisites:
+      - "session-transcript-reader-001"
+      - "session-ingest-hook-sandboxed-001"
+      - "session-runtime-env-unification-001"
+      - "gateway-query-context-api-001"
+      - "gateway-knowledge-shared-adapters-001"
+      - "shared-scoring-rework-001"
+      - "shared-candidate-review-lifecycle-001"
+      - "session-outbox-batch-and-observability-001"
+      - "session-schema-migration-tooling-001"
+      - "session-data-protection-001"
+    goal: "Prove the full loop end-to-end, using ONLY synthetic/fixture data (never real personal conversations): ingest -> projection -> a NEW session's query retrieves the earlier context -> a repeated pattern becomes a shared candidate -> a simulated human review promotes it to reviewed_shared -> the gateway returns one envelope containing the canonical fact, the current workdir/repo state, the session history, any conflict, and provenance for every item."
+    required_context:
+      - "Every prerequisite job's output report (read each one's Claim-Evidence Matrix before designing the E2E fixture)"
+    output_files:
+      - "output/golden-path-e2e-synthetic.md"
+    acceptance_gates:
+      - "Report confirms all 10 prerequisite jobs are done, or marks this job NO-GO and names exactly which prerequisite is missing."
+      - "A single, real, end-to-end test run is shown start to finish: synthetic ingest event in, final GatewayContextEnvelope out, with every intermediate stage's output quoted (projection row, search hit, candidate row, promoted reviewed_shared row, final envelope)."
+      - "Report explicitly states no real personal conversation data was used anywhere in this job, and explains what makes the fixture data synthetic (not just anonymized real data)."
+    required_evidence:
+      - "Full, real test transcript showing every stage of the pipeline acting on the same synthetic conversation thread."
+    forbidden_shortcuts:
+      - "using any real ChatGPT export, real Claude Code transcript, or any other real personal conversation content as fixture data -- synthetic only"
+      - "skipping any of the 10 prerequisite stages by mocking what they would have produced instead of running the real code"
+      - "marking this job done/candidate if even one prerequisite is not actually done"

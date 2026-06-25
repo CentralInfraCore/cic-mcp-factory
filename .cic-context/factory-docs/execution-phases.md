@@ -179,3 +179,40 @@ agent-job):
 Feltetel:
 
 - Phase 2-5 mind `done`
+
+## Phase 7 - Live Loop Closure & Hardening
+
+Cel:
+
+- a Phase 6 alatt bekotott kapacitasok korul a meg hianyzo, agent altal
+  epitheto reseket zarni: tenyleges beszelgetes-tartalom kinyerese (nem csak
+  hook-esemenynaplo), query-alapu gateway API, shared scoring/lifecycle
+  javitas, outbox/migracio/observability/data-protection hardening
+- KIZAROLAG azokat a reseket fedi, amik agent-job-kent epithetok es
+  tesztelhetok valodi (de szintetikus) adaton -- a tenyleges eles aktivalas
+  nem resze ennek a fazisnak
+
+Elso capability-k (4 fuggetlen csoport, parhuzamosan indithatok):
+
+- 7-A: `session-transcript-reader-001`, `session-ingest-hook-sandboxed-001`,
+  `session-runtime-env-unification-001`
+- 7-B: `gateway-query-context-api-001`, `gateway-knowledge-shared-adapters-001`
+- 7-C: `shared-scoring-rework-001`, `shared-candidate-review-lifecycle-001`
+- 7-D: `session-outbox-batch-and-observability-001`,
+  `session-schema-migration-tooling-001`, `session-data-protection-001`
+- 7-E (csak a 7-A..7-D mind `done` utan): `golden-path-e2e-synthetic-001`
+
+Tudatosan KIHAGYVA ebbol a fazisbol is (ember/operator dontes kell elotte,
+nem agent-job -- ugyanaz a hatar, amit a Phase 6 mar kimondott, itt csak
+megerositve marad):
+
+- a `session-ingest-hook-sandboxed-001` altal megepitett hook scriptek eles
+  bekotese egy valodi Claude Code `settings.json`-ba (privacy/consent dontes)
+- tartos, nem eldobhato production Postgres-instance felallitasa es a
+  worker-loop systemd timer tenyleges telepitese ellene (hosting-dontes)
+- a historical importer futtatasa valodi, szemelyes export-bundle ellen
+  (kulon biztonsagi review kell elotte)
+
+Feltetel:
+
+- Phase 6 mind `done`
