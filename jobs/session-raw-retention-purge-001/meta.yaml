@@ -1,0 +1,24 @@
+schema_version: "1.0"
+job_id: "session-raw-retention-purge-001"
+parent_job_id: ""
+level: "capability"
+capability:
+  id: "cic_mcp.session.raw_retention_purge"
+  target_repo: "cic-mcp-session"
+  change_type: "new_capability"
+  status_after_merge: "experimental"
+kb_focus: ["cic-mcp-session", "session_raw", "retention", "purge", "session_audit"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: []
+  branch: "feature/session-raw-retention-purge-001"
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-06-25T23:30:00Z"
+  started: ""
+  completed: ""
