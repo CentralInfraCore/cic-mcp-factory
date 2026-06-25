@@ -1,0 +1,23 @@
+schema_version: "1.0"
+job_id: "session-outbox-batch-and-observability-001"
+parent_job_id: ""
+level: "capability"
+capability:
+  id: "cic_mcp.session.outbox_batch_and_observability"
+  target_repo: "cic-mcp-session"
+  change_type: "fix"
+  status_after_merge: "candidate"
+kb_focus: ["cic-mcp-session", "outbox", "observability", "turn_projector"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: []
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-06-25T09:00:00Z"
+  started: ""
+  completed: ""

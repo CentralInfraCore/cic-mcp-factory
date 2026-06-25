@@ -1,0 +1,23 @@
+schema_version: "1.0"
+job_id: "session-transcript-reader-001"
+parent_job_id: ""
+level: "capability"
+capability:
+  id: "cic_mcp.session.transcript_reader"
+  target_repo: "cic-mcp-session"
+  change_type: "new_capability"
+  status_after_merge: "candidate"
+kb_focus: ["cic-mcp-session", "session_store", "transcript", "ingest"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: []
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-06-25T09:00:00Z"
+  started: ""
+  completed: ""

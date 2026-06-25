@@ -1,0 +1,23 @@
+schema_version: "1.0"
+job_id: "shared-scoring-rework-001"
+parent_job_id: ""
+level: "capability"
+capability:
+  id: "cic_mcp.shared.scoring_rework"
+  target_repo: "cic-mcp-shared"
+  change_type: "fix"
+  status_after_merge: "candidate"
+kb_focus: ["cic-mcp-shared", "aggregator", "scoring", "upsert"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: []
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-06-25T09:00:00Z"
+  started: ""
+  completed: ""

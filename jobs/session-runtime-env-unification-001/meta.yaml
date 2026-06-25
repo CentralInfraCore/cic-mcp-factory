@@ -1,0 +1,23 @@
+schema_version: "1.0"
+job_id: "session-runtime-env-unification-001"
+parent_job_id: ""
+level: "capability"
+capability:
+  id: "cic_mcp.session.runtime_env_unification"
+  target_repo: "cic-mcp-session"
+  change_type: "fix"
+  status_after_merge: "candidate"
+kb_focus: ["cic-mcp-session", "config", "env", "runtime"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: ["cic-mcp-gateway"]
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-06-25T09:00:00Z"
+  started: ""
+  completed: ""
