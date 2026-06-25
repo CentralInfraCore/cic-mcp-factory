@@ -15,7 +15,7 @@ agent:
   session_id: ""
 workplace:
   repos: ["cic-mcp-gateway"]
-status: "agent_done"
+status: "done"
 error_message: ""
 timestamps:
   created: "2026-06-25T09:00:00Z"
