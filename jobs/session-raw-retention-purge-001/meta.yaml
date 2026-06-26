@@ -16,9 +16,9 @@ agent:
 workplace:
   repos: []
   branch: "feature/session-raw-retention-purge-001"
-status: "pending"
+status: "agent_done"
 error_message: ""
 timestamps:
   created: "2026-06-25T23:30:00Z"
-  started: ""
-  completed: ""
+  started: "2026-06-26T00:30:00Z"
+  completed: "2026-06-26T01:15:00Z"
