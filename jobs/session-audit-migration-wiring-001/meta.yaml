@@ -1,0 +1,24 @@
+schema_version: "1.0"
+job_id: "session-audit-migration-wiring-001"
+parent_job_id: ""
+level: "capability"
+capability:
+  id: "cic_mcp.session.audit_migration_wiring"
+  target_repo: "cic-mcp-session"
+  change_type: "fix"
+  status_after_merge: "experimental"
+kb_focus: ["cic-mcp-session", "migrations", "session_audit", "migrate", "raw_reads"]
+promptmap_ref: ""
+agent:
+  config_dir: "~/.claude-personal/agents/agent-01"
+  model: "claude-sonnet-4-6"
+  session_id: ""
+workplace:
+  repos: []
+  branch: "feature/session-audit-migration-wiring-001"
+status: "pending"
+error_message: ""
+timestamps:
+  created: "2026-06-26T05:00:00Z"
+  started: ""
+  completed: ""
